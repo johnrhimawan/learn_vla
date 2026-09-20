@@ -1,0 +1,14 @@
+[project]
+name = "learn-vla"
+version = "0.1.0"
+description = "Hands-on LeRobot and MuJoCo examples for learning vision-language-action robotics"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "lerobot[dataset]==0.6.1",
+    "mujoco==3.13.0",
+]
+
+[tool.uv]
+package = false
+

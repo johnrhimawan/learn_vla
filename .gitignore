@@ -1,0 +1,7 @@
+.venv/
+.uv-cache/
+.cache/
+artifacts/
+__pycache__/
+*.py[cod]
+.DS_Store

@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+# Homebrew's unversioned FFmpeg is newer than the versions supported by the
+# TorchCodec release pinned by LeRobot. Point dyld at the compatible keg.
+if [ "$(uname -s)" = "Darwin" ] && [ -d /opt/homebrew/opt/ffmpeg@8/lib ]; then
+    if [ -n "${DYLD_LIBRARY_PATH:-}" ]; then
+        export DYLD_LIBRARY_PATH="/opt/homebrew/opt/ffmpeg@8/lib:$DYLD_LIBRARY_PATH"
+    else
+        export DYLD_LIBRARY_PATH="/opt/homebrew/opt/ffmpeg@8/lib"
+    fi
+fi
+
+export UV_CACHE_DIR="${UV_CACHE_DIR:-.uv-cache}"
+export HF_HOME="${HF_HOME:-.cache/huggingface}"
+exec uv run "$@"
