@@ -80,19 +80,115 @@ that tend to be new even with a strong ML background:
 Read [`examples/mujoco_reach.py`](examples/mujoco_reach.py) in this order:
 `MODEL_XML`, `observe`, `expert_action`, `step`, then `collect_dataset`.
 
+## Load and run SmolVLA
+
+The environment includes LeRobot's `smolvla` and `training` extras. The model
+used here is the public 450M-parameter `lerobot/smolvla_base` checkpoint, pinned
+to revision `d9f33c94a60fb382c90dea2164c96845bd955e28` so the exercise remains
+reproducible with LeRobot 0.6.1.
+
+If your Hugging Face token is stored in `~/.env`, export it into the current
+shell without printing it:
+
+```bash
+set -a
+source ~/.env
+set +a
+```
+
+Download the checkpoint without loading it:
+
+```bash
+scripts/run python examples/smolvla_inference.py --download-only
+```
+
+Then run one real policy prediction on Apple Silicon:
+
+```bash
+scripts/run python examples/smolvla_inference.py --device mps
+```
+
+This passes a rendered MuJoCo frame, six proprioceptive values, and the task
+text through SmolVLA. It prints the six-dimensional SO-100 action predicted by
+the base model. The script deliberately does not execute that action: this
+simulator has three joints and needs a fine-tuned three-dimensional action head
+before a rollout is meaningful.
+
+The Hugging Face cache lives under `.cache/huggingface/` and is ignored by Git.
+The SmolVLA checkpoint plus its SmolVLM backbone support files occupy about
+2.8 GB on this machine.
+
+## Fine-tune SmolVLA on the MuJoCo arm
+
+Collect demonstrations using a VLA-ready schema. Unlike the introductory
+dataset, this dataset does not put end-effector or target coordinates in
+`observation.state`. The target is visible only through `camera1`, so the model
+cannot solve the task while ignoring vision.
+
+```bash
+scripts/run python examples/collect_smolvla_dataset.py \
+  --episodes 50 \
+  --output artifacts/smolvla-reach-50
+```
+
+Inspect the result:
+
+```bash
+scripts/run python examples/inspect_dataset.py \
+  artifacts/smolvla-reach-50 \
+  --repo-id local/smolvla-mujoco-reach
+```
+
+The learning input and target are:
+
+| Field | Role | Shape |
+| --- | --- | --- |
+| `observation.images.camera1` | RGB scene observation | `3 x 256 x 256` |
+| `observation.state` | joint positions and velocities | `6` |
+| `task` | language instruction | string |
+| `action` | expert joint-position command | `3` |
+
+Run a one-step training check on the Mac:
+
+```bash
+SMOLVLA_OUTPUT=artifacts/smolvla-one-step \
+  scripts/train_smolvla artifacts/smolvla-reach-50 1 mps
+```
+
+For a short learning experiment, increase the step count. Batch size 1 keeps
+MPS memory use modest:
+
+```bash
+scripts/train_smolvla artifacts/smolvla-reach-50 100 mps
+```
+
+For an H200 run, reproduce the environment from `uv.lock`, make the dataset
+available on the cluster, and use CUDA with a larger batch:
+
+```bash
+export SMOLVLA_MODEL=lerobot/smolvla_base
+export SMOLVLA_BATCH_SIZE=64
+export SMOLVLA_OUTPUT=outputs/smolvla-reach-h200
+scripts/train_smolvla /path/to/smolvla-reach-50 20000 cuda
+```
+
+The current dataset has one instruction, so it teaches visually conditioned
+reaching rather than language-dependent task selection. Add several tasks with
+different instructions and demonstrations when you want to measure whether the
+policy responds to language changes.
+
 ## Where this leads
 
 The example is an expert demonstration generator. A practical learning path is:
 
-1. Replace the expert action with keyboard or gamepad teleoperation and collect
+1. Fine-tune SmolVLA on the generated expert demonstrations and add a rollout
+   adapter that maps its three learned outputs back into the simulator.
+2. Replace the expert action with keyboard or gamepad teleoperation and collect
    demonstrations.
-2. Train a small behavior-cloning or ACT policy on the resulting dataset and
-   close the loop in this simulator.
-3. Add randomized target locations, textures, cameras, latency, and sensor
-   noise to study generalization and sim-to-real gaps.
-4. Move training to the H200 cluster and try a LeRobot VLA policy such as
-   SmolVLA, while continuing to evaluate rollouts locally or in parallel
-   simulation workers.
+3. Add several language-distinct tasks, plus randomized textures, cameras,
+   latency, and sensor noise to study generalization and sim-to-real gaps.
+4. Move full training to the H200 cluster while continuing to evaluate policy
+   rollouts locally or in parallel simulation workers.
 
 The Mac setup is enough for simulation, dataset inspection, policy plumbing,
 and small inference experiments. Large VLA fine-tuning is intentionally a
@@ -103,4 +199,6 @@ between macOS/MPS and Linux/CUDA.
 
 - [LeRobot installation](https://huggingface.co/docs/lerobot/installation)
 - [LeRobot Dataset API](https://huggingface.co/docs/lerobot/api/datasets)
+- [LeRobot SmolVLA guide](https://huggingface.co/docs/lerobot/smolvla)
+- [SmolVLA base checkpoint](https://huggingface.co/lerobot/smolvla_base)
 - [MuJoCo Python bindings](https://mujoco.readthedocs.io/en/stable/python.html)

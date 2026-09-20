@@ -1,0 +1,43 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
+    echo "usage: scripts/train_smolvla DATASET_ROOT [STEPS] [DEVICE]" >&2
+    exit 2
+fi
+
+dataset_root=$1
+steps=${2:-100}
+device=${3:-mps}
+revision=d9f33c94a60fb382c90dea2164c96845bd955e28
+local_model=".cache/huggingface/hub/models--lerobot--smolvla_base/snapshots/$revision"
+
+if [ -n "${SMOLVLA_MODEL:-}" ]; then
+    model=$SMOLVLA_MODEL
+elif [ -d "$local_model" ]; then
+    model=$local_model
+else
+    model=lerobot/smolvla_base
+fi
+
+batch_size=${SMOLVLA_BATCH_SIZE:-1}
+output_dir=${SMOLVLA_OUTPUT:-artifacts/smolvla-train-$(date +%Y%m%d-%H%M%S)}
+save_checkpoint=${SMOLVLA_SAVE_CHECKPOINT:-true}
+
+exec scripts/run lerobot-train \
+    --policy.path="$model" \
+    --policy.pretrained_revision="$revision" \
+    --policy.device="$device" \
+    --policy.push_to_hub=false \
+    --dataset.repo_id=local/smolvla-mujoco-reach \
+    --dataset.root="$dataset_root" \
+    --dataset.video_backend=pyav \
+    --batch_size="$batch_size" \
+    --steps="$steps" \
+    --num_workers=0 \
+    --output_dir="$output_dir" \
+    --job_name=smolvla-mujoco-reach \
+    --wandb.enable=false \
+    --save_checkpoint="$save_checkpoint" \
+    --save_freq=0 \
+    --log_freq=1

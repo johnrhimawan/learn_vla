@@ -5,10 +5,9 @@ description = "Hands-on LeRobot and MuJoCo examples for learning vision-language
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "lerobot[dataset]==0.6.1",
+    "lerobot[smolvla,training]==0.6.1",
     "mujoco==3.13.0",
 ]
 
 [tool.uv]
 package = false
-
