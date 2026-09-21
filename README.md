@@ -215,6 +215,14 @@ Visualize it on macOS with:
 scripts/run mjpython examples/tennis_ball_flight.py --viewer
 ```
 
+Audit the pinned 7-DoF arm and generated racket workspace:
+
+```bash
+scripts/run python examples/tennis_arm_workspace.py
+scripts/run mjpython examples/tennis_arm_workspace.py --viewer
+scripts/run python examples/tennis_contact_probe.py
+```
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous

@@ -24,11 +24,20 @@ control_stack:
 milestones:
   - id: M0
     name: court_and_ball_physics
-    status: in_progress
+    status: complete
     exit_gate: Ball flight, bounce, net, court, and racket contact tests pass.
+    work_items:
+      regulation_court_geometry: complete
+      gravity_drag_and_bounce: complete
+      net_and_line_calls: complete
+      seeded_ball_feeder: complete
+      first_order_racket_impact: complete
+      pinned_7dof_reference_arm: complete
+      integrated_mujoco_racket_contact: complete
+      calibrated_spin_and_string_response: planned
   - id: M1
     name: vision_ball_tracking
-    status: planned
+    status: next
     exit_gate: 3D ball RMSE <= 0.05 m and contact-time error <= 0.025 s.
   - id: M2
     name: stationary_and_fed_ball_contact

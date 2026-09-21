@@ -41,9 +41,22 @@ impulse separately. The first ball-flight implementation is already in
 `tennis_vla/ballistics.py`; it intentionally omits spin until the no-spin model
 has calibration data.
 
+The simulation reference arm is the Apache-2.0 Sawyer model from MuJoCo
+Menagerie 2026.9.0. Its seven joints and longer reach are useful for the
+fixed-base contact study. The model archive and checksum are pinned in
+`tennis_vla/arm.py`, and the generated racket is attached at the wrist. A
+20,000-pose audit found a maximum sampled racket-center radial reach of 1.31 m.
+The MJCF does not provide authoritative joint-velocity limits, so this is a
+kinematic reference and does not select the eventual physical robot.
+
 Exit gate: deterministic tests cover flight, bounce, net collision, court
 bounds, racket contact, and seeded randomization. A visual rollout runs on the
 Mac without training.
+
+Core M0 is complete for the no-spin model. The integrated contact probe sends a
+5.0 m/s ball into the held racket and measures a 3.846 m/s rebound, within
+0.054 m/s of the independent first-order impact prediction. Spin and flexible
+string-bed calibration remain a follow-up before high-speed training.
 
 ### M1 — Ball perception and prediction
 
@@ -174,13 +187,16 @@ adapted only through a versioned action schema.
 ## Immediate work queue
 
 1. Validate the headless ball-flight scenario and inspect it in the MuJoCo
-   viewer.
+   viewer. **Implemented.**
 2. Add the full court, net collision, configurable feeder, and trajectory tests.
-3. Select a 7-DoF MJCF arm whose reach and velocity envelope can produce the M2
-   contacts; keep the real-hardware choice open.
-4. Add racket geometry and measure the outgoing-ball map as a function of
-   contact point, normal, and racket velocity.
-5. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
+   **Implemented for the no-spin model.**
+3. Select and pin a 7-DoF MJCF reference arm and audit its kinematic workspace.
+   **Implemented with Sawyer; physical hardware remains open.**
+4. Integrate the arm, racket, ball, and court into one MuJoCo contact scene and
+   validate the outgoing-ball map against the first-order impact model.
+   **Implemented for normal, stationary-racket impact.**
+5. Add calibrated spin and string-bed response.
+6. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
@@ -188,5 +204,6 @@ The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
 - [2026 ITF Rules of Tennis](https://www.itftennis.com/media/7221/2026-rules-of-tennis-english.pdf)
 - [MuJoCo force callbacks](https://mujoco.readthedocs.io/en/latest/APIreference/APIglobals.html)
+- [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie)
 - [LeRobot SmolVLA guide](https://huggingface.co/docs/lerobot/smolvla)
 - [LeRobot HIL-SERL actor/learner workflow](https://huggingface.co/docs/lerobot/main/hilserl)

@@ -12,6 +12,8 @@ from typing import Any
 
 import numpy as np
 
+from .court import TennisCourtSpec
+
 
 @dataclass(frozen=True)
 class BallFlightConfig:
@@ -35,6 +37,10 @@ class BallFlightResult:
     net_crossing_m: np.ndarray | None
     first_bounce_m: np.ndarray | None
     bounce_count: int
+    hit_net: bool
+    net_clearance_m: float | None
+    legal_first_bounce: bool
+    outcome: str
 
     def metrics(self) -> dict[str, Any]:
         return {
@@ -47,6 +53,12 @@ class BallFlightResult:
             if self.first_bounce_m is None
             else [round(float(value), 6) for value in self.first_bounce_m],
             "bounce_count": self.bounce_count,
+            "hit_net": self.hit_net,
+            "net_clearance_m": None
+            if self.net_clearance_m is None
+            else round(self.net_clearance_m, 6),
+            "legal_first_bounce": self.legal_first_bounce,
+            "outcome": self.outcome,
             "maximum_height_m": round(float(self.positions_m[:, 2].max()), 6),
             "final_speed_m_s": round(
                 float(np.linalg.norm(self.velocities_m_s[-1])), 6
@@ -91,6 +103,7 @@ def simulate_ball_flight(
     position_m: np.ndarray,
     velocity_m_s: np.ndarray,
     config: BallFlightConfig | None = None,
+    court: TennisCourtSpec | None = None,
 ) -> BallFlightResult:
     """Simulate a ball and report its net crossing and first court bounce.
 
@@ -98,6 +111,7 @@ def simulate_ball_flight(
     net is x=0, court width is y, and height is z.
     """
     config = config or BallFlightConfig()
+    court = court or TennisCourtSpec()
     position = np.asarray(position_m, dtype=np.float64).reshape(3).copy()
     velocity = np.asarray(velocity_m_s, dtype=np.float64).reshape(3).copy()
     steps = int(round(config.duration_s / config.dt_s))
@@ -108,6 +122,10 @@ def simulate_ball_flight(
     net_crossing: np.ndarray | None = None
     first_bounce: np.ndarray | None = None
     bounce_count = 0
+    hit_net = False
+    net_clearance: float | None = None
+    final_index = steps
+    initial_side = 1.0 if position[0] >= 0.0 else -1.0
 
     for index in range(1, steps + 1):
         previous_position = position.copy()
@@ -117,6 +135,19 @@ def simulate_ball_flight(
             dx = position[0] - previous_position[0]
             fraction = 0.0 if abs(dx) < 1e-12 else -previous_position[0] / dx
             net_crossing = previous_position + fraction * (position - previous_position)
+            if abs(net_crossing[1]) <= court.doubles_half_width_m:
+                net_clearance = float(
+                    net_crossing[2]
+                    - config.radius_m
+                    - court.net_height_m(float(net_crossing[1]))
+                )
+                if net_clearance <= 0.0:
+                    hit_net = True
+                    position = net_crossing.copy()
+                    velocity[:] = 0.0
+                    positions[index], velocities[index] = position, velocity
+                    final_index = index
+                    break
 
         if position[2] <= config.radius_m and velocity[2] < 0.0:
             position[2] = config.radius_m
@@ -128,11 +159,32 @@ def simulate_ball_flight(
 
         positions[index], velocities[index] = position, velocity
 
+    legal_first_bounce = bool(
+        not hit_net
+        and first_bounce is not None
+        and first_bounce[0] * initial_side <= 0.0
+        and court.contains_singles_bounce(first_bounce, config.radius_m)
+    )
+    if hit_net:
+        outcome = "hit_net"
+    elif first_bounce is None:
+        outcome = "airborne"
+    elif first_bounce[0] * initial_side > 0.0:
+        outcome = "same_side_bounce"
+    elif legal_first_bounce:
+        outcome = "legal_first_bounce"
+    else:
+        outcome = "out"
+
     return BallFlightResult(
-        times_s=times,
-        positions_m=positions,
-        velocities_m_s=velocities,
+        times_s=times[: final_index + 1],
+        positions_m=positions[: final_index + 1],
+        velocities_m_s=velocities[: final_index + 1],
         net_crossing_m=net_crossing,
         first_bounce_m=first_bounce,
         bounce_count=bounce_count,
+        hit_net=hit_net,
+        net_clearance_m=net_clearance,
+        legal_first_bounce=legal_first_bounce,
+        outcome=outcome,
     )

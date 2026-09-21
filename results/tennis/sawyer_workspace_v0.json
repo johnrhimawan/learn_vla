@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "arm": {
+    "model": "rethink_robotics_sawyer",
+    "entry": "sawyer",
+    "dof": 7,
+    "actuators": 7,
+    "license": "Apache-2.0",
+    "menagerie_version": "2026.9.0",
+    "asset_oid": "4b0d742b4136b8f8ec9a30af036dea239588d485",
+    "archive_sha256": "79bd43888554d98bd4e5b5fc784f4fd384653b6da160495d55cebb821faaf97e"
+  },
+  "racket": {
+    "body_mass_kg": 0.23891812130550377,
+    "center_offset_from_wrist_m": 0.48,
+    "head_semi_axes_m": [
+      0.18,
+      0.015,
+      0.135
+    ]
+  },
+  "sampling": {
+    "samples": 20000,
+    "seed": 2026
+  },
+  "home_racket_center_m": [
+    0.4492190581749617,
+    0.16030029194141415,
+    0.6957539041379923
+  ],
+  "racket_center_bounds_m": {
+    "minimum": [
+      -1.2210165927708725,
+      -1.2389360625001817,
+      -0.8437904471611484
+    ],
+    "maximum": [
+      1.221037258728563,
+      1.302119488151968,
+      1.4842484091894104
+    ]
+  },
+  "racket_tip_bounds_m": {
+    "minimum": [
+      -1.4005162741166357,
+      -1.4114766238736405,
+      -1.0212148626065445
+    ],
+    "maximum": [
+      1.3902046075277683,
+      1.4663699889619934,
+      1.6519118607316985
+    ]
+  },
+  "radial_reach_m": {
+    "median": 0.48748173948483164,
+    "p95": 0.9778060348393172,
+    "maximum_sampled": 1.3134640595169462
+  },
+  "limitations": [
+    "Uniform joint sampling is a kinematic audit, not a collision-free workspace.",
+    "The Menagerie MJCF does not encode authoritative joint-velocity limits.",
+    "This selection does not commit the project to Sawyer hardware."
+  ]
+}

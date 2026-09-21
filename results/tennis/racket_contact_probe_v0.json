@@ -1,0 +1,9 @@
+{
+  "contacted": true,
+  "contact_step": 41,
+  "separation_step": 51,
+  "incoming_normal_speed_m_s": 5.0,
+  "outgoing_normal_speed_m_s": 3.8461250546050625,
+  "predicted_outgoing_normal_speed_m_s": 3.9000000000000004,
+  "normal_speed_error_m_s": 0.05387494539493787
+}
