@@ -223,6 +223,19 @@ scripts/run mjpython examples/tennis_arm_workspace.py --viewer
 scripts/run python examples/tennis_contact_probe.py
 ```
 
+Run the calibrated two-camera perception baseline on 25 held-out feeds:
+
+```bash
+scripts/run python examples/tennis_perception_baseline.py
+```
+
+The command renders 450 stereo observations, reconstructs the ball without
+reading its simulator state, predicts its strike-plane crossing at least 150 ms
+ahead, and writes a versioned report to
+`results/tennis/perception_baseline_v0.json`. Exact simulator state is used only
+to score the predictions. The canonical baseline is the start of M1; learned
+tracking under randomized appearance and camera conditions is the next gate.
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous

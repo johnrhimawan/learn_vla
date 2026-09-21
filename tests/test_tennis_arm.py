@@ -43,6 +43,8 @@ class TennisArmTests(unittest.TestCase):
         self.assertAlmostEqual(float(model.body("tennis_ball").mass[0]), 0.0577)
         self.assertGreater(model.geom("tennis_net").id, -1)
         self.assertGreater(model.camera("court_camera").id, -1)
+        self.assertGreater(model.camera("camera1").id, -1)
+        self.assertGreater(model.camera("camera2").id, -1)
 
     def test_integrated_racket_rebound_matches_impact_model(self) -> None:
         probe = probe_stationary_racket_contact(5.0)

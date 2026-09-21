@@ -36,6 +36,17 @@ class RacketContactProbe:
         return result
 
 
+def _camera_xyaxes(
+    position: np.ndarray, target: np.ndarray
+) -> list[float]:
+    forward = target - position
+    forward /= np.linalg.norm(forward)
+    right = np.cross(forward, np.array([0.0, 0.0, 1.0]))
+    right /= np.linalg.norm(right)
+    up = np.cross(right, forward)
+    return np.concatenate((right, up)).tolist()
+
+
 def make_tennis_contact_model(
     racket_solref: tuple[float, float] = (-100_000.0, -50.0),
 ) -> mujoco.MjModel:
@@ -46,6 +57,9 @@ def make_tennis_contact_model(
     spec.modelname = "tennis_contact_v0"
     spec.option.timestep = 0.001
     spec.option.gravity = [0.0, 0.0, -ball.gravity_m_s2]
+
+    # Put the fixed-base arm behind the near baseline, facing the court.
+    spec.body("base").pos = [-10.6, 0.0, 0.0]
 
     world = spec.worldbody
     world.add_geom(
@@ -95,6 +109,23 @@ def make_tennis_contact_model(
         name="court_camera",
         pos=[-4.0, -5.0, 3.0],
         xyaxes=[0.78, -0.62, 0.0, 0.25, 0.31, 0.92],
+    )
+    # The stereo pair sits behind the near baseline and converges on the
+    # arm's receiving half. This keeps both the bounce and strike zone in view.
+    camera_target = np.array([-6.5, 0.0, 1.0])
+    camera1_position = np.array([-12.5, -5.5, 3.4])
+    camera2_position = np.array([-12.5, 5.5, 3.4])
+    world.add_camera(
+        name="camera1",
+        pos=camera1_position.tolist(),
+        xyaxes=_camera_xyaxes(camera1_position, camera_target),
+        fovy=55.0,
+    )
+    world.add_camera(
+        name="camera2",
+        pos=camera2_position.tolist(),
+        xyaxes=_camera_xyaxes(camera2_position, camera_target),
+        fovy=55.0,
     )
     return spec.compile()
 

@@ -67,7 +67,17 @@ and the reachable intercept window. Keep true ball state available only to the
 simulator, labels, reward, and an asymmetric critic.
 
 Exit gate: held-out 3D position RMSE at most 5 cm and predicted contact-time
-error at most 25 ms over the phase-one feeder envelope.
+RMSE at most 25 ms over the phase-one feeder envelope.
+
+The first canonical-rendering baseline is implemented. Two calibrated cameras
+behind the near baseline feed an illumination-tolerant color segmenter, ray
+triangulator, and five-frame local velocity fit. On 25 held-out feeder seeds it
+detected all 450 stereo frames, measured 5.8 mm 3D position RMSE, and predicted
+the x=-9.25 m strike-plane crossing at least 150 ms ahead with 10.6 ms RMSE.
+These figures pass the numeric thresholds in the canonical scene, but M1
+remains open: the baseline has no domain randomization, motion blur, spin
+classifier, or learned temporal model. The versioned report is
+`results/tennis/perception_baseline_v0.json`.
 
 ### M2 — Racket control and contact
 
@@ -195,8 +205,12 @@ adapted only through a versioned action schema.
 4. Integrate the arm, racket, ball, and court into one MuJoCo contact scene and
    validate the outgoing-ball map against the first-order impact model.
    **Implemented for normal, stationary-racket impact.**
-5. Add calibrated spin and string-bed response.
-6. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
+5. Add the calibrated stereo scene and canonical ball-tracking benchmark.
+   **Implemented; M1 remains in progress.**
+6. Generate `tennis-flight-v0` with held-out lighting, texture, camera, blur,
+   ball-color, and physics splits; train the learned M1 estimator.
+7. Add calibrated spin and string-bed response.
+8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 

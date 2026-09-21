@@ -37,8 +37,17 @@ milestones:
       calibrated_spin_and_string_response: planned
   - id: M1
     name: vision_ball_tracking
-    status: next
-    exit_gate: 3D ball RMSE <= 0.05 m and contact-time error <= 0.025 s.
+    status: in_progress
+    exit_gate: 3D ball RMSE <= 0.05 m and contact-time RMSE <= 0.025 s.
+    work_items:
+      calibrated_stereo_scene: complete
+      canonical_color_segmentation: complete
+      ray_triangulation: complete
+      local_contact_time_prediction: complete
+      randomized_render_dataset: planned
+      learned_detector_and_temporal_estimator: planned
+      spin_classification: planned
+      reachable_intercept_window: planned
   - id: M2
     name: stationary_and_fed_ball_contact
     status: planned

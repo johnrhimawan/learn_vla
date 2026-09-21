@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "benchmark": "tennis-stereo-perception-v0",
+  "scene": {
+    "resolution": [
+      512,
+      384
+    ],
+    "camera_names": [
+      "camera1",
+      "camera2"
+    ],
+    "canonical_rendering_only": true
+  },
+  "evaluation": {
+    "seed_start": 7000,
+    "seeds": 25,
+    "observation_hz": 50.0,
+    "prediction_lead_s": 0.15,
+    "history_frames": 5,
+    "strike_plane_x_m": -9.25
+  },
+  "metrics": {
+    "frames": 450,
+    "detected_frames": 450,
+    "detection_rate": 1.0,
+    "position_rmse_m": 0.005830726424295006,
+    "position_p95_error_m": 0.01044662378851863,
+    "contact_time_predictions": 25,
+    "minimum_prediction_horizon_s": 0.15952901646403572,
+    "contact_time_mae_s": 0.00740603596313524,
+    "contact_time_rmse_s": 0.010630969533500706,
+    "contact_time_max_error_s": 0.032020651455148874
+  },
+  "m1_gate_check": {
+    "position_rmse_threshold_m": 0.05,
+    "position_rmse_pass": true,
+    "contact_time_rmse_threshold_s": 0.025,
+    "contact_time_rmse_pass": true
+  },
+  "episodes": [
+    {
+      "seed": 7000,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006497263095622446,
+      "true_contact_time_s": 1.615334553681006,
+      "predicted_contact_time_s": 1.6098690130215498,
+      "contact_time_error_s": 0.005465540659456147
+    },
+    {
+      "seed": 7001,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005613663084202218,
+      "true_contact_time_s": 1.4813990070434297,
+      "predicted_contact_time_s": 1.4762701532573206,
+      "contact_time_error_s": 0.0051288537861091665
+    },
+    {
+      "seed": 7002,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006094262913736461,
+      "true_contact_time_s": 1.3694959620759737,
+      "predicted_contact_time_s": 1.3653349364347815,
+      "contact_time_error_s": 0.00416102564119214
+    },
+    {
+      "seed": 7003,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005048784553394577,
+      "true_contact_time_s": 1.8360690685981533,
+      "predicted_contact_time_s": 1.833129208156548,
+      "contact_time_error_s": 0.0029398604416053242
+    },
+    {
+      "seed": 7004,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00512140103063116,
+      "true_contact_time_s": 1.6820960900798363,
+      "predicted_contact_time_s": 1.6788902836107458,
+      "contact_time_error_s": 0.003205806469090522
+    },
+    {
+      "seed": 7005,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005149854685263554,
+      "true_contact_time_s": 1.3264015986627145,
+      "predicted_contact_time_s": 1.305474611009401,
+      "contact_time_error_s": 0.020926987653313356
+    },
+    {
+      "seed": 7006,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00648347230495558,
+      "true_contact_time_s": 1.3099949841390368,
+      "predicted_contact_time_s": 1.305382252082219,
+      "contact_time_error_s": 0.004612732056817892
+    },
+    {
+      "seed": 7007,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006872620544260973,
+      "true_contact_time_s": 1.2129188223985834,
+      "predicted_contact_time_s": 1.206212753962249,
+      "contact_time_error_s": 0.006706068436334478
+    },
+    {
+      "seed": 7008,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005848490217534789,
+      "true_contact_time_s": 1.6388610422740288,
+      "predicted_contact_time_s": 1.635158590535054,
+      "contact_time_error_s": 0.0037024517389747658
+    },
+    {
+      "seed": 7009,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005568073530624133,
+      "true_contact_time_s": 1.460661722510229,
+      "predicted_contact_time_s": 1.4560933733581436,
+      "contact_time_error_s": 0.004568349152085371
+    },
+    {
+      "seed": 7010,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006320493694023906,
+      "true_contact_time_s": 1.3564611859095717,
+      "predicted_contact_time_s": 1.3346915206566063,
+      "contact_time_error_s": 0.02176966525296531
+    },
+    {
+      "seed": 7011,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00676467875323649,
+      "true_contact_time_s": 1.6105290164640358,
+      "predicted_contact_time_s": 1.6059461615591681,
+      "contact_time_error_s": 0.00458285490486765
+    },
+    {
+      "seed": 7012,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005055369779117588,
+      "true_contact_time_s": 1.6959974707422316,
+      "predicted_contact_time_s": 1.6938293428673958,
+      "contact_time_error_s": 0.002168127874835779
+    },
+    {
+      "seed": 7013,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005822080032304717,
+      "true_contact_time_s": 1.6603820365264823,
+      "predicted_contact_time_s": 1.6564029108759206,
+      "contact_time_error_s": 0.003979125650561688
+    },
+    {
+      "seed": 7014,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00546063865106457,
+      "true_contact_time_s": 1.5421785182905339,
+      "predicted_contact_time_s": 1.5382039182306828,
+      "contact_time_error_s": 0.003974600059851063
+    },
+    {
+      "seed": 7015,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.0051575031357134985,
+      "true_contact_time_s": 1.683869139995181,
+      "predicted_contact_time_s": 1.6807039171581115,
+      "contact_time_error_s": 0.003165222837069548
+    },
+    {
+      "seed": 7016,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00487555845863571,
+      "true_contact_time_s": 1.6481798132164112,
+      "predicted_contact_time_s": 1.6452931924277883,
+      "contact_time_error_s": 0.0028866207886228956
+    },
+    {
+      "seed": 7017,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.007500812860626397,
+      "true_contact_time_s": 1.1984419242076798,
+      "predicted_contact_time_s": 1.193014530963872,
+      "contact_time_error_s": 0.00542739324380781
+    },
+    {
+      "seed": 7018,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006424531664280591,
+      "true_contact_time_s": 1.2699395165726257,
+      "predicted_contact_time_s": 1.2476317257832206,
+      "contact_time_error_s": 0.022307790789405146
+    },
+    {
+      "seed": 7019,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005816530834007047,
+      "true_contact_time_s": 1.3475419539178468,
+      "predicted_contact_time_s": 1.3434720758145506,
+      "contact_time_error_s": 0.004069878103296176
+    },
+    {
+      "seed": 7020,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005754144498231314,
+      "true_contact_time_s": 1.3858520602391775,
+      "predicted_contact_time_s": 1.3817997354799494,
+      "contact_time_error_s": 0.004052324759228121
+    },
+    {
+      "seed": 7021,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.00543459394967088,
+      "true_contact_time_s": 1.7122727240647941,
+      "predicted_contact_time_s": 1.7078916365957488,
+      "contact_time_error_s": 0.004381087469045308
+    },
+    {
+      "seed": 7022,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.0045111485918686075,
+      "true_contact_time_s": 1.7292576235589716,
+      "predicted_contact_time_s": 1.7249052570660903,
+      "contact_time_error_s": 0.004352366492881288
+    },
+    {
+      "seed": 7023,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.005256202387669709,
+      "true_contact_time_s": 1.3525443280016476,
+      "predicted_contact_time_s": 1.3205236765464987,
+      "contact_time_error_s": 0.032020651455148874
+    },
+    {
+      "seed": 7024,
+      "frames": 18,
+      "detections": 18,
+      "position_rmse_m": 0.006245452036337432,
+      "true_contact_time_s": 1.4997796005142825,
+      "predicted_contact_time_s": 1.4951840871524673,
+      "contact_time_error_s": 0.0045955133618151844
+    }
+  ],
+  "limitations": [
+    "This baseline uses canonical lighting and materials without domain randomization.",
+    "It does not estimate spin or model motion blur.",
+    "Its temporal model assumes constant velocity and can be biased across a bounce.",
+    "The M1 milestone remains open until learned and randomized held-out evaluation passes."
+  ]
+}
