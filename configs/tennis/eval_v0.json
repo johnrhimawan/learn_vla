@@ -1,0 +1,27 @@
+{
+  "suite": "tennis-return-v0",
+  "description": "Fixed-base arm returns machine-fed balls after one bounce.",
+  "court": "ITF singles",
+  "episodes_per_cell": 25,
+  "held_out_seed_start": 7000,
+  "feed_cells": [
+    {"speed_m_s": [8.0, 12.0], "lateral_m": [-1.5, 1.5], "spin": "none"},
+    {"speed_m_s": [12.0, 18.0], "lateral_m": [-2.5, 2.5], "spin": "none"},
+    {"speed_m_s": [10.0, 16.0], "lateral_m": [-2.0, 2.0], "spin": "topspin"},
+    {"speed_m_s": [10.0, 16.0], "lateral_m": [-2.0, 2.0], "spin": "backspin"}
+  ],
+  "instructions": [
+    "Return cross-court to the deep left target.",
+    "Return down the line to the deep right target.",
+    "Play a safe high ball through the center."
+  ],
+  "metrics": [
+    "contact_rate",
+    "legal_return_rate",
+    "target_zone_accuracy",
+    "contact_time_error_s",
+    "landing_error_m",
+    "joint_limit_violations",
+    "inference_latency_ms"
+  ]
+}

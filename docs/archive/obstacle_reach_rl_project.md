@@ -21,7 +21,7 @@ the disturbance trigger are private simulator state. They are available to
 the reward and metrics, never added to the policy observation.
 
 The held-out suite is fixed in
-[`configs/eval/obstacle_reach_v0.json`](../configs/eval/obstacle_reach_v0.json).
+[`configs/eval/obstacle_reach_v0.json`](../../configs/eval/obstacle_reach_v0.json).
 It contains both instructions, nominal episodes, and episodes with an impulse
 at control step 20. Every controller goes through the same joint and slew-rate
 limits in `ObstacleReachEnv.project_action`.
@@ -43,7 +43,7 @@ least-squares controller with local obstacle repulsion. The current generated
 set has 596 frames, 100% task success, and no collisions. Seeds 1100–1115 are
 the training partition and 1116–1119 are validation. Evaluation seeds start at
 2100 and are never demonstrations. The complete specification is in
-[`configs/datasets/obstacle_reach_rl_v0.json`](../configs/datasets/obstacle_reach_rl_v0.json).
+[`configs/datasets/obstacle_reach_rl_v0.json`](../../configs/datasets/obstacle_reach_rl_v0.json).
 
 The dataset directory is ignored by Git because image data grows quickly. Copy
 it to object storage or a versioned cluster path before training. Keep its
@@ -75,7 +75,7 @@ The recorded base run succeeded on 2 of 4 held-out episodes (50%), while the
 classical task expert succeeded on all 4. The base reached the green target in
 both nominal and disturbed trials but failed both red-target trials. That
 language-conditioned gap is the comparison point for imitation learning and
-RL. Reports live in [`results/baselines`](../results/baselines).
+RL. Reports live in [`results/baselines`](../../results/baselines).
 
 ## H200 learner setup
 
@@ -103,7 +103,7 @@ CUDA virtual environment.
 
 The intended topology is one H200 learner plus 16 CPU MuJoCo actors sharing an
 off-policy replay service. Start with the parameters in
-[`configs/rl/h200_residual_sac.yaml`](../configs/rl/h200_residual_sac.yaml):
+[`configs/rl/h200_residual_sac.yaml`](../../configs/rl/h200_residual_sac.yaml):
 
 1. Freeze SmolVLA. At each replan it produces the base three-joint action and a
    frozen visual/language representation.

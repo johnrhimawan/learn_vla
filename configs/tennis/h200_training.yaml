@@ -1,0 +1,68 @@
+project: tennis-vla
+status: staged-design
+
+base_policy:
+  model: lerobot/smolvla_base
+  revision: d9f33c94a60fb382c90dea2164c96845bd955e28
+  observation_schema:
+    - fixed_camera_near
+    - fixed_camera_side
+    - robot_joint_state
+    - ball_track_history
+    - language_instruction
+  action_schema_status: freeze_after_M2
+  planned_action_chunk:
+    - contact_time
+    - contact_pose_6d
+    - racket_velocity_6d
+    - recovery_pose
+
+stages:
+  - id: perception
+    milestone: M1
+    objective: detect_and_predict_ball_flight
+    precision: bfloat16
+    validation_metric: ball_3d_rmse_m
+  - id: behavior_cloning
+    milestone: M3
+    dataset: tennis-vla-bc-v0
+    optimizer_steps: 50000
+    batch_size_start: 64
+    precision: bfloat16
+  - id: residual_sac
+    milestone: M4
+    frozen_vla: true
+    residual_targets: [contact_time, contact_pose, racket_velocity]
+    replay_capacity: 2000000
+    demonstration_fraction_start: 0.25
+    asymmetric_critic: true
+    actor_observations: deployable_only
+    critic_privileged_observations:
+      - exact_ball_state
+      - contact_impulse
+      - exact_landing_point
+  - id: advantage_weighted_distillation
+    milestone: M4
+    input: successful_rl_replay
+    output: single_vla_checkpoint
+
+topology:
+  learner:
+    accelerator: NVIDIA_H200
+    count: 1
+  simulation_actors:
+    device: cpu
+    initial_count: 16
+    scale_after_benchmark: true
+  evaluation_workers:
+    count: 4
+    fixed_suite: configs/tennis/eval_v0.json
+
+checkpoint_contract:
+  include:
+    - git_commit
+    - model_revision
+    - dataset_manifest_hash
+    - simulator_config_hash
+    - evaluation_report
+    - random_seeds

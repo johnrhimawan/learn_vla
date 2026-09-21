@@ -1,0 +1,68 @@
+project: tennis-vla
+north_star: >-
+  A vision-language-action policy that sustains a ten-shot singles rally and
+  follows spoken or written shot-placement instructions.
+
+initial_embodiment:
+  simulation: fixed-base 7-dof arm with a regulation-size racket
+  feed: programmable ball machine
+  handedness: right-handed
+  real_world_ball: ITF Stage 1 green ball before regulation Type 2 balls
+
+control_stack:
+  safety_loop_hz: 1000
+  joint_servo_hz: 250
+  strike_policy_hz: 50
+  vla_planner_hz: 10
+  vla_output:
+    - stroke_family
+    - contact_time
+    - contact_pose
+    - racket_velocity
+    - landing_target
+
+milestones:
+  - id: M0
+    name: court_and_ball_physics
+    status: in_progress
+    exit_gate: Ball flight, bounce, net, court, and racket contact tests pass.
+  - id: M1
+    name: vision_ball_tracking
+    status: planned
+    exit_gate: 3D ball RMSE <= 0.05 m and contact-time error <= 0.025 s.
+  - id: M2
+    name: stationary_and_fed_ball_contact
+    status: planned
+    exit_gate: Contact rate >= 0.95 across the held-out feeder envelope.
+  - id: M3
+    name: behavior_cloned_returns
+    status: planned
+    exit_gate: Legal return rate >= 0.70 on held-out seeds.
+  - id: M4
+    name: residual_rl_placement
+    status: planned
+    exit_gate: Legal return >= 0.85 and target-zone accuracy >= 0.60.
+  - id: M5
+    name: language_conditioned_shots
+    status: planned
+    exit_gate: Instruction compliance >= 0.85 over unseen phrasings.
+  - id: M6
+    name: closed_loop_rallies
+    status: planned
+    exit_gate: Median rally length >= 10 over 100 evaluation rallies.
+  - id: M7
+    name: guarded_sim_to_real
+    status: planned
+    exit_gate: 1000 safe Stage-1-ball feeds with zero safety-envelope violations.
+
+compute:
+  mac_mini:
+    - environment development
+    - visualization
+    - dataset inspection
+    - deterministic inference regression
+  h200:
+    - SmolVLA behavior cloning
+    - frozen-VLA residual SAC
+    - advantage-weighted VLA distillation
+    - large evaluation sweeps

@@ -195,24 +195,31 @@ and small inference experiments. Large VLA fine-tuning is intentionally a
 separate CUDA environment because PyTorch wheels and accelerator tooling differ
 between macOS/MPS and Linux/CUDA.
 
-## RL project: obstacle avoidance and recovery
+## Active project: a tennis-playing VLA
 
-The repository now includes a language-conditioned task where RL has a clear
-job: optimize recovery, collision avoidance, speed, and smoothness after a
-demonstration warm start. Generate the deterministic seed dataset and reproduce
-the pre-training references with:
+The active goal is a vision-language-action system that can return tennis balls,
+place shots from language instructions, and eventually sustain rallies. The
+project starts with a fixed-base 7-DoF racket arm and programmable feeds, then
+adds vision, behavior cloning, residual RL, language-conditioned placement,
+closed-loop rallies, and guarded transfer to hardware.
+
+Run the first deterministic ball-flight check:
 
 ```bash
-scripts/collect_rl_seed_data
-scripts/evaluate_rl_baseline expert --device cpu
-scripts/evaluate_rl_baseline smolvla-base --device mps
+scripts/run python examples/tennis_ball_flight.py
 ```
 
-The checked-in base report comes from the pinned SmolVLA checkpoint with no
-task-specific gradient updates. It scores 50% on the four held-out cases; the
-classical expert scores 100%. The full task definition, data split, Mac
-inference procedure, H200 container, residual SAC stages, and comparison gates
-are in [`docs/rl_project.md`](docs/rl_project.md).
+Visualize it on macOS with:
+
+```bash
+scripts/run mjpython examples/tennis_ball_flight.py --viewer
+```
+
+The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
+and quantitative exit gates are in
+[`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous
+obstacle-reaching project remains as an archived learning prototype in
+[`docs/archive/obstacle_reach_rl_project.md`](docs/archive/obstacle_reach_rl_project.md).
 
 ## Primary references
 
@@ -222,3 +229,4 @@ are in [`docs/rl_project.md`](docs/rl_project.md).
 - [LeRobot HIL-SERL simulation](https://huggingface.co/docs/lerobot/hilserl_sim)
 - [SmolVLA base checkpoint](https://huggingface.co/lerobot/smolvla_base)
 - [MuJoCo Python bindings](https://mujoco.readthedocs.io/en/stable/python.html)
+- [2026 ITF Rules of Tennis](https://www.itftennis.com/media/7221/2026-rules-of-tennis-english.pdf)
