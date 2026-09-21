@@ -23,20 +23,23 @@ fi
 batch_size=${SMOLVLA_BATCH_SIZE:-1}
 output_dir=${SMOLVLA_OUTPUT:-artifacts/smolvla-train-$(date +%Y%m%d-%H%M%S)}
 save_checkpoint=${SMOLVLA_SAVE_CHECKPOINT:-true}
+dataset_repo_id=${LEROBOT_DATASET_REPO_ID:-local/smolvla-mujoco-reach}
+job_name=${LEROBOT_JOB_NAME:-smolvla-mujoco-reach}
+runner=${LEROBOT_RUNNER:-scripts/run}
 
-exec scripts/run lerobot-train \
+exec "$runner" lerobot-train \
     --policy.path="$model" \
     --policy.pretrained_revision="$revision" \
     --policy.device="$device" \
     --policy.push_to_hub=false \
-    --dataset.repo_id=local/smolvla-mujoco-reach \
+    --dataset.repo_id="$dataset_repo_id" \
     --dataset.root="$dataset_root" \
     --dataset.video_backend=pyav \
     --batch_size="$batch_size" \
     --steps="$steps" \
     --num_workers=0 \
     --output_dir="$output_dir" \
-    --job_name=smolvla-mujoco-reach \
+    --job_name="$job_name" \
     --wandb.enable=false \
     --save_checkpoint="$save_checkpoint" \
     --save_freq=0 \

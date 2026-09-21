@@ -1,0 +1,56 @@
+project: obstacle-reach-v0
+status: implementation-plan
+
+policy:
+  base_model: lerobot/smolvla_base
+  revision: d9f33c94a60fb382c90dea2164c96845bd955e28
+  checkpoint_sha256: 7cd549ac2351fb069c0ddb3c34ad2d09cfc92b56a15dccdfc2e41467aaca01eb
+  conditioning: [camera1, joint_state, language]
+  base_action_dim: 3
+  freeze_during_residual_training: true
+
+environment:
+  id: obstacle-reach-v0
+  control_hz: 20
+  image_size: 256
+  max_episode_steps: 80
+  reward_source: simulator_privileged_state
+  evaluation_suite: configs/eval/obstacle_reach_v0.json
+
+algorithm:
+  name: residual_sac
+  action: clipped_base_action_plus_scaled_residual
+  residual_scale: 0.10
+  discount: 0.99
+  target_update_tau: 0.005
+  actor_learning_rate: 0.0003
+  critic_learning_rate: 0.0003
+  entropy_temperature: auto
+  batch_size: 512
+  replay_capacity: 1000000
+  updates_per_environment_step: 1
+  demonstration_fraction: 0.25
+  seed_dataset: artifacts/obstacle-reach-seed-v0
+
+compute:
+  learner:
+    accelerators: 1
+    accelerator_type: NVIDIA_H200
+    precision: bfloat16
+  simulation_actors:
+    count: 16
+    device: cpu
+  transport: local_replay_server
+
+training:
+  seed: 3100
+  total_environment_steps: 1000000
+  random_warmup_steps: 10000
+  evaluation_interval_steps: 25000
+  checkpoint_interval_steps: 25000
+  stop_if_success_rate: 0.90
+  stop_if_collision_rate_above: 0.10
+
+later_stages:
+  - advantage_weighted_flow_matching_on_replay
+  - distill_residual_into_single_vla_policy

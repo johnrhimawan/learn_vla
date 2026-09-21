@@ -195,10 +195,30 @@ and small inference experiments. Large VLA fine-tuning is intentionally a
 separate CUDA environment because PyTorch wheels and accelerator tooling differ
 between macOS/MPS and Linux/CUDA.
 
+## RL project: obstacle avoidance and recovery
+
+The repository now includes a language-conditioned task where RL has a clear
+job: optimize recovery, collision avoidance, speed, and smoothness after a
+demonstration warm start. Generate the deterministic seed dataset and reproduce
+the pre-training references with:
+
+```bash
+scripts/collect_rl_seed_data
+scripts/evaluate_rl_baseline expert --device cpu
+scripts/evaluate_rl_baseline smolvla-base --device mps
+```
+
+The checked-in base report comes from the pinned SmolVLA checkpoint with no
+task-specific gradient updates. It scores 50% on the four held-out cases; the
+classical expert scores 100%. The full task definition, data split, Mac
+inference procedure, H200 container, residual SAC stages, and comparison gates
+are in [`docs/rl_project.md`](docs/rl_project.md).
+
 ## Primary references
 
 - [LeRobot installation](https://huggingface.co/docs/lerobot/installation)
 - [LeRobot Dataset API](https://huggingface.co/docs/lerobot/api/datasets)
 - [LeRobot SmolVLA guide](https://huggingface.co/docs/lerobot/smolvla)
+- [LeRobot HIL-SERL simulation](https://huggingface.co/docs/lerobot/hilserl_sim)
 - [SmolVLA base checkpoint](https://huggingface.co/lerobot/smolvla_base)
 - [MuJoCo Python bindings](https://mujoco.readthedocs.io/en/stable/python.html)

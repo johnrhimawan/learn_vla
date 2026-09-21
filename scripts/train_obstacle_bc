@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+export LEROBOT_DATASET_REPO_ID=local/obstacle-reach-rl-v0
+export LEROBOT_JOB_NAME=smolvla-obstacle-reach-bc
+exec "$(dirname "$0")/train_smolvla" "$@"

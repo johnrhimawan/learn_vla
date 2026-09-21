@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+# The NGC image already contains the CUDA-enabled PyTorch build. Execute in
+# that system environment instead of asking uv to resolve the macOS lockfile.
+export HF_HOME="${HF_HOME:-/workspace/.cache/huggingface}"
+export MUJOCO_GL="${MUJOCO_GL:-egl}"
+exec "$@"

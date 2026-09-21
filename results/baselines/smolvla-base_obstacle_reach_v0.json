@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-21T14:48:48Z",
+  "controller": "smolvla-base",
+  "policy": {
+    "id": "lerobot/smolvla_base",
+    "revision": "d9f33c94a60fb382c90dea2164c96845bd955e28",
+    "checkpoint_sha256": "7cd549ac2351fb069c0ddb3c34ad2d09cfc92b56a15dccdfc2e41467aaca01eb",
+    "parameter_count": 450046176,
+    "training_state": "pretrained_base_no_task_specific_gradient_updates",
+    "embodiment_calibration": "seed_dataset_normalization_statistics_only",
+    "calibration_dataset": "local/obstacle-reach-rl-v0",
+    "calibration_metadata_sha256": "3c2c0e5d98e7415a1ea95012af55f04f02d606d49a704255a43c7fef4eac73f6"
+  },
+  "evaluation_suite": {
+    "path": "configs/eval/obstacle_reach_v0.json",
+    "id": "obstacle-reach-v0",
+    "sha256": "27cf14df91f75dbe3fc46bed03ab279c322763f3f12419f373606189b677bba5",
+    "action_horizon": 10
+  },
+  "runtime": {
+    "device": "mps",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.14",
+    "torch": "2.11.0"
+  },
+  "episodes": [
+    {
+      "episode": 0,
+      "seed": 2100,
+      "task_key": "red_fast",
+      "disturbance_step": null,
+      "disturbance_applied": false,
+      "success": false,
+      "collisions": 0,
+      "return": -0.513195,
+      "steps": 60,
+      "initial_distance": 0.283704,
+      "min_distance": 0.216219,
+      "final_distance": 0.226314,
+      "total_action_change": 1.944115,
+      "wall_seconds": 1.962521
+    },
+    {
+      "episode": 1,
+      "seed": 2101,
+      "task_key": "green_smooth",
+      "disturbance_step": null,
+      "disturbance_applied": false,
+      "success": true,
+      "collisions": 0,
+      "return": 23.115359,
+      "steps": 35,
+      "initial_distance": 0.329427,
+      "min_distance": 0.011015,
+      "final_distance": 0.011015,
+      "total_action_change": 1.241755,
+      "wall_seconds": 1.15064
+    },
+    {
+      "episode": 2,
+      "seed": 2102,
+      "task_key": "red_fast",
+      "disturbance_step": 20,
+      "disturbance_applied": true,
+      "success": false,
+      "collisions": 0,
+      "return": -0.456645,
+      "steps": 60,
+      "initial_distance": 0.432576,
+      "min_distance": 0.355391,
+      "final_distance": 0.370474,
+      "total_action_change": 1.775652,
+      "wall_seconds": 1.738823
+    },
+    {
+      "episode": 3,
+      "seed": 2103,
+      "task_key": "green_smooth",
+      "disturbance_step": 20,
+      "disturbance_applied": true,
+      "success": true,
+      "collisions": 0,
+      "return": 22.864896,
+      "steps": 45,
+      "initial_distance": 0.34105,
+      "min_distance": 0.026641,
+      "final_distance": 0.026641,
+      "total_action_change": 1.709182,
+      "wall_seconds": 1.437983
+    }
+  ],
+  "aggregate": {
+    "episodes": 4,
+    "success_rate": 0.5,
+    "collision_episode_rate": 0.0,
+    "mean_return": 11.25260375,
+    "mean_final_distance": 0.158611,
+    "inference_calls": 21,
+    "mean_inference_seconds": 0.2855395198040198,
+    "p95_inference_seconds": 0.2791647909907624
+  }
+}

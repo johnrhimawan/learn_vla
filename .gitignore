@@ -2,6 +2,7 @@
 .uv-cache/
 .cache/
 artifacts/
+outputs/
 __pycache__/
 *.py[cod]
 .DS_Store
