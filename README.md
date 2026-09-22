@@ -7,11 +7,18 @@ milestones add visual ball tracking, behavior cloning, residual reinforcement
 learning, language-conditioned placement, rallies, and guarded hardware
 transfer.
 
-The repository contains only the tennis project. Start with
-[`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md) for the design and
-[`configs/tennis/roadmap.yaml`](configs/tennis/roadmap.yaml) for machine-readable
-milestone status. [`HANDOFF.md`](HANDOFF.md) records the current engineering
-state and the next work in detail.
+The repository contains only the tennis project.
+
+## Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) explains the components, core
+  mathematics, and how data flows through the current and planned systems.
+- [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md) defines the milestones
+  from simulation through behavior cloning, residual RL, rallies, and hardware.
+- [`configs/tennis/roadmap.yaml`](configs/tennis/roadmap.yaml) records
+  machine-readable milestone status and evaluation splits.
+- [`HANDOFF.md`](HANDOFF.md) records current results, known gaps, reserved seeds,
+  and the immediate engineering queue.
 
 ## The current result
 
