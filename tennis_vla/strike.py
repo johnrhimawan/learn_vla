@@ -613,6 +613,17 @@ def plan_safe_center_strikes(
                         contact_joint_velocity = (
                             unit_joint_velocity * racket_speed
                         )
+                        racket_velocity = (
+                            jacobian_position[:, :7] @ contact_joint_velocity
+                        )
+                        try:
+                            outgoing_velocity = apply_racket_impact(
+                                candidate.ball_velocity_m_s,
+                                racket_velocity,
+                                candidate.solution.racket_normal,
+                            )
+                        except ValueError:
+                            continue
                         trajectory = (
                             QuinticJointTrajectory.from_boundary_conditions(
                                 start,
@@ -669,14 +680,6 @@ def plan_safe_center_strikes(
                             ),
                         ) is None:
                             continue
-                        racket_velocity = (
-                            jacobian_position[:, :7] @ contact_joint_velocity
-                        )
-                        outgoing_velocity = apply_racket_impact(
-                            candidate.ball_velocity_m_s,
-                            racket_velocity,
-                            candidate.solution.racket_normal,
-                        )
                         predicted_return = simulate_ball_flight(
                             candidate.ball_position_m,
                             outgoing_velocity,

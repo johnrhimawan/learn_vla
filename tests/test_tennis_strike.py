@@ -8,6 +8,7 @@ from tennis_vla.ballistics import simulate_ball_flight
 from tennis_vla.environment import make_tennis_contact_model
 from tennis_vla.strike import (
     QuinticJointTrajectory,
+    StrikeSearchConfig,
     minimum_infinity_joint_velocity,
     plan_safe_center_strikes,
     trajectory_is_execution_safe,
@@ -81,6 +82,24 @@ class TennisStrikeTests(unittest.TestCase):
         self.assertTrue(
             trajectory_is_execution_safe(self.model, plan.trajectory)
         )
+
+    def test_receding_ball_candidates_are_rejected_without_error(self) -> None:
+        flight = simulate_ball_flight(
+            np.array([-9.0, 0.0, 1.0]),
+            np.array([10.0, 0.0, 2.0]),
+        )
+        plans = plan_safe_center_strikes(
+            self.model,
+            flight,
+            search=StrikeSearchConfig(
+                face_pitch_degrees=(20.0,),
+                racket_normal_speeds_m_s=(1.0,),
+                racket_tangent_ratios=(0.0,),
+                alternative_ik_solutions=1,
+            ),
+            seed=1,
+        )
+        self.assertEqual(plans, [])
 
 
 if __name__ == "__main__":
