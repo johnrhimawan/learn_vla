@@ -10,7 +10,7 @@ import mujoco
 import numpy as np
 
 from .arm import tennis_ready_configuration
-from .ballistics import BallFlightResult, simulate_ball_flight
+from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 from .impact import apply_racket_impact
 from .intercept import InterceptCandidate, RacketIKConfig, find_kinematic_intercepts
 from .trajectory import SimulationJointMotionLimits
@@ -31,8 +31,16 @@ class StrikeSearchConfig:
         26.0,
         28.0,
         30.0,
+        32.0,
+        34.0,
+        36.0,
     )
     racket_normal_speeds_m_s: tuple[float, ...] = (
+        3.0,
+        2.9,
+        2.8,
+        2.7,
+        2.6,
         2.5,
         2.4,
         2.3,
@@ -50,6 +58,17 @@ class StrikeSearchConfig:
         1.1,
         1.0,
     )
+    racket_tangent_ratios: tuple[float, ...] = (
+        0.0,
+        -0.5,
+        -0.75,
+        -1.0,
+        -0.25,
+    )
+    alternative_ik_solutions: int = 4
+    planning_ball_timestep_s: float = 0.005
+    maximum_returned_plans: int = 8
+    trajectory_safety_sample_period_s: float = 0.01
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
     fixed_wrist_roll_velocity_rad_s: float = 0.0
@@ -61,6 +80,16 @@ class StrikeSearchConfig:
             raise ValueError("racket_normal_speeds_m_s cannot be empty")
         if any(speed <= 0.0 for speed in self.racket_normal_speeds_m_s):
             raise ValueError("racket normal speeds must be positive")
+        if not self.racket_tangent_ratios:
+            raise ValueError("racket_tangent_ratios cannot be empty")
+        if self.alternative_ik_solutions < 1:
+            raise ValueError("alternative_ik_solutions must be at least one")
+        if self.planning_ball_timestep_s <= 0.0:
+            raise ValueError("planning_ball_timestep_s must be positive")
+        if self.maximum_returned_plans < 1:
+            raise ValueError("maximum_returned_plans must be at least one")
+        if self.trajectory_safety_sample_period_s <= 0.0:
+            raise ValueError("trajectory safety sample period must be positive")
         if self.minimum_net_clearance_m < 0.0:
             raise ValueError("minimum_net_clearance_m cannot be negative")
 
@@ -186,8 +215,14 @@ class QuinticJointTrajectory:
             position_phases = [0.0, 1.0, *_unit_interval_roots(velocity_coefficients)]
             speed_phases = [0.0, 1.0, *_unit_interval_roots(acceleration_coefficients)]
             acceleration_phases = [0.0, 1.0, *_unit_interval_roots(jerk_coefficients)]
-            positions = [self.sample(phase * self.duration_s)[0][joint] for phase in position_phases]
-            speeds = [self.sample(phase * self.duration_s)[1][joint] for phase in speed_phases]
+            positions = [
+                self.sample(phase * self.duration_s)[0][joint]
+                for phase in position_phases
+            ]
+            speeds = [
+                self.sample(phase * self.duration_s)[1][joint]
+                for phase in speed_phases
+            ]
             accelerations = [
                 self.sample(phase * self.duration_s)[2][joint]
                 for phase in acceleration_phases
@@ -213,6 +248,8 @@ class StrikePlan:
     candidate: InterceptCandidate
     face_pitch_degrees: float
     requested_racket_normal_speed_m_s: float
+    requested_racket_tangent_ratio: float
+    requested_racket_tangent_speed_m_s: float
     contact_joint_velocities_rad_s: np.ndarray
     contact_racket_velocity_m_s: np.ndarray
     outgoing_ball_velocity_m_s: np.ndarray
@@ -230,6 +267,12 @@ class StrikePlan:
             "requested_racket_normal_speed_m_s": (
                 self.requested_racket_normal_speed_m_s
             ),
+            "requested_racket_tangent_ratio": (
+                self.requested_racket_tangent_ratio
+            ),
+            "requested_racket_tangent_speed_m_s": (
+                self.requested_racket_tangent_speed_m_s
+            ),
             "contact_joint_velocities_rad_s": (
                 self.contact_joint_velocities_rad_s.tolist()
             ),
@@ -242,7 +285,9 @@ class StrikePlan:
             "landing_error_m": self.landing_error_m,
             "trajectory": {
                 "duration_s": self.trajectory.duration_s,
-                "start_joint_positions_rad": self.trajectory.coefficients[:, 0].tolist(),
+                "start_joint_positions_rad": (
+                    self.trajectory.coefficients[:, 0].tolist()
+                ),
                 "contact_joint_positions_rad": (
                     self.candidate.solution.joint_positions_rad.tolist()
                 ),
@@ -271,7 +316,18 @@ def strike_ik_config() -> RacketIKConfig:
         normal_tolerance_deg=0.5,
         damping=0.02,
         maximum_iterations=350,
-        restarts=8,
+        restarts=24,
+        initial_joint_guesses_rad=(
+            (
+                -1.42072953,
+                -0.62989468,
+                -2.50767152,
+                -0.42313329,
+                -2.47537407,
+                2.62599651,
+                4.38343366,
+            ),
+        ),
     )
 
 
@@ -350,6 +406,46 @@ def minimum_infinity_joint_velocity(
     return result
 
 
+def trajectory_is_execution_safe(
+    model: mujoco.MjModel,
+    trajectory: QuinticJointTrajectory,
+    *,
+    sample_period_s: float = 0.01,
+) -> bool:
+    """Reject sampled collisions and velocity-compensation command clipping."""
+    if sample_period_s <= 0.0:
+        raise ValueError("sample_period_s must be positive")
+    data = mujoco.MjData(model)
+    ball_joint = model.joint("ball_free")
+    ball_qpos_address = int(ball_joint.qposadr[0])
+    data.qpos[ball_qpos_address : ball_qpos_address + 7] = [
+        10.0,
+        0.0,
+        4.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+    ]
+    actuator_gain = model.actuator_gainprm[:7, 0]
+    actuator_damping = -model.actuator_biasprm[:7, 2]
+    control_lower = model.actuator_ctrlrange[:7, 0]
+    control_upper = model.actuator_ctrlrange[:7, 1]
+    sample_count = int(np.ceil(trajectory.duration_s / sample_period_s))
+    for elapsed_s in np.linspace(0.0, trajectory.duration_s, sample_count + 1):
+        position, velocity, _ = trajectory.sample(float(elapsed_s))
+        position_command = position + actuator_damping * velocity / actuator_gain
+        if np.any(position_command < control_lower) or np.any(
+            position_command > control_upper
+        ):
+            return False
+        data.qpos[:7] = position
+        mujoco.mj_forward(model, data)
+        if data.ncon:
+            return False
+    return True
+
+
 def plan_safe_center_strikes(
     model: mujoco.MjModel,
     flight: BallFlightResult,
@@ -368,100 +464,177 @@ def plan_safe_center_strikes(
     start = tennis_ready_configuration(model)
     landing_target = np.asarray(search.landing_target_xy_m, dtype=np.float64)
     site_id = model.site("racket_center").id
-    plans = []
-
-    for pitch_degrees in search.face_pitch_degrees:
-        pitch = np.deg2rad(pitch_degrees)
-        target_normal = np.array([np.cos(pitch), 0.0, np.sin(pitch)])
-        candidates = find_kinematic_intercepts(
-            model,
-            flight,
-            racket_normal=target_normal,
-            maximum_candidates=8,
-            ik_config=ik_config,
-            seed=seed,
+    def search_with_ik_branches(solutions_per_pose: int) -> list[StrikePlan]:
+        coarse_records = []
+        planning_flight = BallFlightConfig(
+            dt_s=search.planning_ball_timestep_s
         )
-        for candidate in candidates:
-            data = mujoco.MjData(model)
-            data.qpos[:7] = candidate.solution.joint_positions_rad
-            mujoco.mj_forward(model, data)
-            jacobian_position = np.zeros((3, model.nv), dtype=np.float64)
-            jacobian_rotation = np.zeros((3, model.nv), dtype=np.float64)
-            mujoco.mj_jacSite(
-                model,
-                data,
-                jacobian_position,
-                jacobian_rotation,
-                site_id,
+        for pitch_degrees in search.face_pitch_degrees:
+            pitch = np.deg2rad(pitch_degrees)
+            target_normal = np.array([np.cos(pitch), 0.0, np.sin(pitch)])
+            vertical_tangent = np.array(
+                [-np.sin(pitch), 0.0, np.cos(pitch)]
             )
-            try:
-                unit_joint_velocity = minimum_infinity_joint_velocity(
-                    jacobian_position[:, :7],
-                    target_normal,
-                    fixed_joint_velocities={
-                        6: search.fixed_wrist_roll_velocity_rad_s
-                    },
+            candidates = find_kinematic_intercepts(
+                model,
+                flight,
+                racket_normal=target_normal,
+                maximum_candidates=8 * solutions_per_pose,
+                solutions_per_pose=solutions_per_pose,
+                ik_config=ik_config,
+                seed=seed,
+            )
+            for candidate in candidates:
+                data = mujoco.MjData(model)
+                data.qpos[:7] = candidate.solution.joint_positions_rad
+                mujoco.mj_forward(model, data)
+                jacobian_position = np.zeros((3, model.nv), dtype=np.float64)
+                jacobian_rotation = np.zeros((3, model.nv), dtype=np.float64)
+                mujoco.mj_jacSite(
+                    model,
+                    data,
+                    jacobian_position,
+                    jacobian_rotation,
+                    site_id,
                 )
-            except ValueError:
-                continue
-
-            for racket_speed in search.racket_normal_speeds_m_s:
-                contact_joint_velocity = unit_joint_velocity * racket_speed
-                trajectory = QuinticJointTrajectory.from_boundary_conditions(
-                    start,
-                    candidate.solution.joint_positions_rad,
-                    duration_s=candidate.time_s,
-                    target_velocity_rad_s=contact_joint_velocity,
-                )
-                bounds = trajectory.bounds(model)
-                if (
-                    bounds.maximum_joint_speed_rad_s
-                    > limits.maximum_speed_rad_s + 1e-9
-                    or bounds.maximum_joint_acceleration_rad_s2
-                    > limits.maximum_acceleration_rad_s2 + 1e-9
-                    or bounds.minimum_joint_limit_margin_rad
-                    < limits.minimum_joint_limit_margin_rad - 1e-9
-                ):
-                    continue
-                racket_velocity = (
-                    jacobian_position[:, :7] @ contact_joint_velocity
-                )
-                outgoing_velocity = apply_racket_impact(
-                    candidate.ball_velocity_m_s,
-                    racket_velocity,
-                    candidate.solution.racket_normal,
-                )
-                predicted_return = simulate_ball_flight(
-                    candidate.ball_position_m,
-                    outgoing_velocity,
-                )
-                bounce = predicted_return.first_bounce_m
-                if (
-                    not predicted_return.legal_first_bounce
-                    or predicted_return.net_clearance_m is None
-                    or predicted_return.net_clearance_m
-                    < search.minimum_net_clearance_m
-                    or bounce is None
-                ):
-                    continue
-                landing_error = float(
-                    np.linalg.norm(bounce[:2] - landing_target)
-                )
-                plans.append(
-                    StrikePlan(
-                        candidate=candidate,
-                        face_pitch_degrees=pitch_degrees,
-                        requested_racket_normal_speed_m_s=racket_speed,
-                        contact_joint_velocities_rad_s=contact_joint_velocity,
-                        contact_racket_velocity_m_s=racket_velocity,
-                        outgoing_ball_velocity_m_s=outgoing_velocity,
-                        predicted_return=predicted_return,
-                        trajectory=trajectory,
-                        trajectory_bounds=bounds,
-                        landing_target_xy_m=landing_target.copy(),
-                        landing_error_m=landing_error,
+                for tangent_ratio in search.racket_tangent_ratios:
+                    unit_racket_velocity = (
+                        target_normal + tangent_ratio * vertical_tangent
                     )
+                    try:
+                        unit_joint_velocity = minimum_infinity_joint_velocity(
+                            jacobian_position[:, :7],
+                            unit_racket_velocity,
+                            fixed_joint_velocities={
+                                6: search.fixed_wrist_roll_velocity_rad_s
+                            },
+                        )
+                    except ValueError:
+                        continue
+
+                    for racket_speed in search.racket_normal_speeds_m_s:
+                        contact_joint_velocity = (
+                            unit_joint_velocity * racket_speed
+                        )
+                        trajectory = (
+                            QuinticJointTrajectory.from_boundary_conditions(
+                                start,
+                                candidate.solution.joint_positions_rad,
+                                duration_s=candidate.time_s,
+                                target_velocity_rad_s=contact_joint_velocity,
+                            )
+                        )
+                        bounds = trajectory.bounds(model)
+                        if (
+                            bounds.maximum_joint_speed_rad_s
+                            > limits.maximum_speed_rad_s + 1e-9
+                            or bounds.maximum_joint_acceleration_rad_s2
+                            > limits.maximum_acceleration_rad_s2 + 1e-9
+                            or bounds.minimum_joint_limit_margin_rad
+                            < limits.minimum_joint_limit_margin_rad - 1e-9
+                        ):
+                            continue
+                        if not trajectory_is_execution_safe(
+                            model,
+                            trajectory,
+                            sample_period_s=(
+                                search.trajectory_safety_sample_period_s
+                            ),
+                        ):
+                            continue
+                        racket_velocity = (
+                            jacobian_position[:, :7] @ contact_joint_velocity
+                        )
+                        outgoing_velocity = apply_racket_impact(
+                            candidate.ball_velocity_m_s,
+                            racket_velocity,
+                            candidate.solution.racket_normal,
+                        )
+                        predicted_return = simulate_ball_flight(
+                            candidate.ball_position_m,
+                            outgoing_velocity,
+                            planning_flight,
+                        )
+                        bounce = predicted_return.first_bounce_m
+                        if (
+                            not predicted_return.legal_first_bounce
+                            or predicted_return.net_clearance_m is None
+                            or predicted_return.net_clearance_m
+                            < search.minimum_net_clearance_m
+                            or bounce is None
+                        ):
+                            continue
+                        landing_error = float(
+                            np.linalg.norm(bounce[:2] - landing_target)
+                        )
+                        coarse_records.append(
+                            (
+                                landing_error,
+                                candidate,
+                                pitch_degrees,
+                                racket_speed,
+                                tangent_ratio,
+                                contact_joint_velocity,
+                                racket_velocity,
+                                outgoing_velocity,
+                                trajectory,
+                                bounds,
+                            )
+                        )
+        plans = []
+        for record in sorted(coarse_records, key=lambda item: item[0]):
+            (
+                _,
+                candidate,
+                pitch_degrees,
+                racket_speed,
+                tangent_ratio,
+                contact_joint_velocity,
+                racket_velocity,
+                outgoing_velocity,
+                trajectory,
+                bounds,
+            ) = record
+            predicted_return = simulate_ball_flight(
+                candidate.ball_position_m,
+                outgoing_velocity,
+            )
+            bounce = predicted_return.first_bounce_m
+            if (
+                not predicted_return.legal_first_bounce
+                or predicted_return.net_clearance_m is None
+                or predicted_return.net_clearance_m
+                < search.minimum_net_clearance_m
+                or bounce is None
+            ):
+                continue
+            landing_error = float(np.linalg.norm(bounce[:2] - landing_target))
+            plans.append(
+                StrikePlan(
+                    candidate=candidate,
+                    face_pitch_degrees=pitch_degrees,
+                    requested_racket_normal_speed_m_s=racket_speed,
+                    requested_racket_tangent_ratio=tangent_ratio,
+                    requested_racket_tangent_speed_m_s=(
+                        tangent_ratio * racket_speed
+                    ),
+                    contact_joint_velocities_rad_s=contact_joint_velocity,
+                    contact_racket_velocity_m_s=racket_velocity,
+                    outgoing_ball_velocity_m_s=outgoing_velocity,
+                    predicted_return=predicted_return,
+                    trajectory=trajectory,
+                    trajectory_bounds=bounds,
+                    landing_target_xy_m=landing_target.copy(),
+                    landing_error_m=landing_error,
                 )
+            )
+            if len(plans) >= search.maximum_returned_plans:
+                break
+        return plans
+
+    plans = search_with_ik_branches(1)
+    if not plans and search.alternative_ik_solutions > 1:
+        plans = search_with_ik_branches(search.alternative_ik_solutions)
 
     return sorted(
         plans,

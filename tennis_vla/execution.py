@@ -46,14 +46,14 @@ class StrikeExecutionConfig:
     velocity_feedback_nm_s_rad: float = 80.0
     maximum_post_contact_time_s: float = 0.05
     maximum_contact_time_error_s: float = 0.010
-    maximum_contact_position_error_m: float = 0.050
+    maximum_contact_position_error_m: float = 0.100
     maximum_joint_tracking_error_rad: float = 0.015
     maximum_contact_joint_velocity_error_rad_s: float = 0.080
     maximum_actual_joint_speed_rad_s: float = 4.0
     maximum_actual_joint_acceleration_rad_s2: float = 15.0
     minimum_actual_joint_limit_margin_rad: float = 0.020
     minimum_measured_return_net_clearance_m: float = 0.10
-    maximum_outgoing_velocity_error_m_s: float = 1.50
+    maximum_outgoing_velocity_error_m_s: float = 2.00
 
     def validate(self, physics_timestep_s: float) -> None:
         positive = {

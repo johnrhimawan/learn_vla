@@ -10,6 +10,7 @@ from tennis_vla.strike import (
     QuinticJointTrajectory,
     minimum_infinity_joint_velocity,
     plan_safe_center_strikes,
+    trajectory_is_execution_safe,
 )
 
 
@@ -76,6 +77,9 @@ class TennisStrikeTests(unittest.TestCase):
         self.assertGreaterEqual(
             plan.trajectory_bounds.minimum_joint_limit_margin_rad,
             0.03,
+        )
+        self.assertTrue(
+            trajectory_is_execution_safe(self.model, plan.trajectory)
         )
 
 
