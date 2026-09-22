@@ -53,6 +53,7 @@ class StrikeSearchConfig:
         36.0,
     )
     face_yaw_degrees: tuple[float, ...] = (0.0,)
+    center_steering_face_yaw_degrees: tuple[float, ...] = (10.0,)
     racket_normal_speeds_m_s: tuple[float, ...] = (
         3.0,
         2.9,
@@ -83,18 +84,24 @@ class StrikeSearchConfig:
         -1.0,
         -0.25,
     )
+    alternative_racket_tangent_ratios: tuple[float, ...] = (-0.1, -0.2)
     alternative_ik_solutions: int = 4
     planning_ball_timestep_s: float = 0.005
     maximum_returned_plans: int = 8
     contact_x_bounds_m: tuple[float, float] = (-10.1, -9.45)
     maximum_abs_contact_y_m: float = 1.1
     contact_z_bounds_m: tuple[float, float] = (0.60, 1.35)
+    alternative_contact_x_bounds_m: tuple[float, float] = (-10.55, -9.35)
+    alternative_maximum_abs_contact_y_m: float = 1.25
+    alternative_contact_z_bounds_m: tuple[float, float] = (0.50, 1.55)
     trajectory_safety_sample_period_s: float = 0.01
     post_contact_safety_horizon_s: float = 0.05
     predicted_recovery_start_delay_s: float = 0.012
     recovery_duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S
     maximum_planned_recovery_acceleration_rad_s2: float = 13.6
     preferred_motion_limit_utilization: float = 0.95
+    maximum_planned_approach_speed_rad_s: float = 3.9
+    maximum_planned_approach_acceleration_rad_s2: float = 14.0
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
     fixed_wrist_roll_velocity_rad_s: float | None = 0.0
@@ -104,6 +111,10 @@ class StrikeSearchConfig:
             raise ValueError("face_pitch_degrees cannot be empty")
         if not self.face_yaw_degrees:
             raise ValueError("face_yaw_degrees cannot be empty")
+        if any(
+            yaw <= 0.0 for yaw in self.center_steering_face_yaw_degrees
+        ):
+            raise ValueError("center steering yaw magnitudes must be positive")
         if not self.racket_normal_speeds_m_s:
             raise ValueError("racket_normal_speeds_m_s cannot be empty")
         if any(speed <= 0.0 for speed in self.racket_normal_speeds_m_s):
@@ -122,6 +133,20 @@ class StrikeSearchConfig:
             raise ValueError("maximum absolute contact y must be positive")
         if self.contact_z_bounds_m[0] >= self.contact_z_bounds_m[1]:
             raise ValueError("contact z bounds must be increasing")
+        if (
+            self.alternative_contact_x_bounds_m[0]
+            >= self.alternative_contact_x_bounds_m[1]
+        ):
+            raise ValueError("alternative contact x bounds must be increasing")
+        if self.alternative_maximum_abs_contact_y_m <= 0.0:
+            raise ValueError(
+                "alternative maximum absolute contact y must be positive"
+            )
+        if (
+            self.alternative_contact_z_bounds_m[0]
+            >= self.alternative_contact_z_bounds_m[1]
+        ):
+            raise ValueError("alternative contact z bounds must be increasing")
         if self.trajectory_safety_sample_period_s <= 0.0:
             raise ValueError("trajectory safety sample period must be positive")
         if self.post_contact_safety_horizon_s < 0.0:
@@ -139,6 +164,12 @@ class StrikeSearchConfig:
         if not 0.0 < self.preferred_motion_limit_utilization <= 1.0:
             raise ValueError(
                 "preferred motion limit utilization must be in (0, 1]"
+            )
+        if self.maximum_planned_approach_speed_rad_s <= 0.0:
+            raise ValueError("maximum planned approach speed must be positive")
+        if self.maximum_planned_approach_acceleration_rad_s2 <= 0.0:
+            raise ValueError(
+                "maximum planned approach acceleration must be positive"
             )
         if self.minimum_net_clearance_m < 0.0:
             raise ValueError("minimum_net_clearance_m cannot be negative")
@@ -591,16 +622,26 @@ def plan_safe_center_strikes(
         "coarse_legal_returns": 0,
         "full_legal_returns": 0,
         "used_alternative_ik_search": False,
+        "used_expanded_contact_search": False,
+        "used_alternative_tangent_search": False,
+        "used_center_steering_yaw_search": False,
     }
 
-    def search_with_ik_branches(solutions_per_pose: int) -> list[StrikePlan]:
+    def search_with_ik_branches(
+        solutions_per_pose: int,
+        face_yaw_degrees: tuple[float, ...],
+        racket_tangent_ratios: tuple[float, ...],
+        contact_x_bounds_m: tuple[float, float],
+        maximum_abs_contact_y_m: float,
+        contact_z_bounds_m: tuple[float, float],
+    ) -> list[StrikePlan]:
         coarse_records = []
         planning_flight = BallFlightConfig(
             dt_s=search.planning_ball_timestep_s
         )
         for pitch_degrees, yaw_degrees in itertools.product(
             search.face_pitch_degrees,
-            search.face_yaw_degrees,
+            face_yaw_degrees,
         ):
             pitch = np.deg2rad(pitch_degrees)
             yaw = np.deg2rad(yaw_degrees)
@@ -624,9 +665,9 @@ def plan_safe_center_strikes(
                 racket_normal=target_normal,
                 maximum_candidates=8 * solutions_per_pose,
                 solutions_per_pose=solutions_per_pose,
-                contact_x_bounds_m=search.contact_x_bounds_m,
-                maximum_abs_contact_y_m=search.maximum_abs_contact_y_m,
-                contact_z_bounds_m=search.contact_z_bounds_m,
+                contact_x_bounds_m=contact_x_bounds_m,
+                maximum_abs_contact_y_m=maximum_abs_contact_y_m,
+                contact_z_bounds_m=contact_z_bounds_m,
                 ik_config=ik_config,
                 seed=seed,
             )
@@ -644,7 +685,7 @@ def plan_safe_center_strikes(
                     jacobian_rotation,
                     site_id,
                 )
-                for tangent_ratio in search.racket_tangent_ratios:
+                for tangent_ratio in racket_tangent_ratios:
                     unit_racket_velocity = (
                         target_normal + tangent_ratio * vertical_tangent
                     )
@@ -691,9 +732,17 @@ def plan_safe_center_strikes(
                         bounds = trajectory.bounds(model)
                         if (
                             bounds.maximum_joint_speed_rad_s
-                            > limits.maximum_speed_rad_s + 1e-9
+                            > min(
+                                limits.maximum_speed_rad_s,
+                                search.maximum_planned_approach_speed_rad_s,
+                            )
+                            + 1e-9
                             or bounds.maximum_joint_acceleration_rad_s2
-                            > limits.maximum_acceleration_rad_s2 + 1e-9
+                            > min(
+                                limits.maximum_acceleration_rad_s2,
+                                search.maximum_planned_approach_acceleration_rad_s2,
+                            )
+                            + 1e-9
                             or bounds.minimum_joint_limit_margin_rad
                             < limits.minimum_joint_limit_margin_rad - 1e-9
                         ):
@@ -833,10 +882,64 @@ def plan_safe_center_strikes(
                 break
         return plans
 
-    plans = search_with_ik_branches(1)
+    plans = search_with_ik_branches(
+        1,
+        search.face_yaw_degrees,
+        search.racket_tangent_ratios,
+        search.contact_x_bounds_m,
+        search.maximum_abs_contact_y_m,
+        search.contact_z_bounds_m,
+    )
     if not plans and search.alternative_ik_solutions > 1:
         planning_counts["used_alternative_ik_search"] = True
-        plans = search_with_ik_branches(search.alternative_ik_solutions)
+        plans = search_with_ik_branches(
+            search.alternative_ik_solutions,
+            search.face_yaw_degrees,
+            search.racket_tangent_ratios,
+            search.contact_x_bounds_m,
+            search.maximum_abs_contact_y_m,
+            search.contact_z_bounds_m,
+        )
+    if not plans:
+        planning_counts["used_expanded_contact_search"] = True
+        plans = search_with_ik_branches(
+            search.alternative_ik_solutions,
+            search.face_yaw_degrees,
+            search.racket_tangent_ratios,
+            search.alternative_contact_x_bounds_m,
+            search.alternative_maximum_abs_contact_y_m,
+            search.alternative_contact_z_bounds_m,
+        )
+    if not plans and search.alternative_racket_tangent_ratios:
+        planning_counts["used_alternative_tangent_search"] = True
+        plans = search_with_ik_branches(
+            search.alternative_ik_solutions,
+            search.face_yaw_degrees,
+            search.alternative_racket_tangent_ratios,
+            search.alternative_contact_x_bounds_m,
+            search.alternative_maximum_abs_contact_y_m,
+            search.alternative_contact_z_bounds_m,
+        )
+    if not plans and search.center_steering_face_yaw_degrees:
+        planning_counts["used_center_steering_yaw_search"] = True
+        contact_center_x = sum(search.alternative_contact_x_bounds_m) / 2.0
+        center_index = int(
+            np.argmin(np.abs(flight.positions_m[:, 0] - contact_center_x))
+        )
+        lateral_position = float(flight.positions_m[center_index, 1])
+        steering_sign = -1.0 if lateral_position >= 0.0 else 1.0
+        steering_yaws = tuple(
+            steering_sign * magnitude
+            for magnitude in search.center_steering_face_yaw_degrees
+        )
+        plans = search_with_ik_branches(
+            search.alternative_ik_solutions,
+            steering_yaws,
+            search.racket_tangent_ratios,
+            search.alternative_contact_x_bounds_m,
+            search.alternative_maximum_abs_contact_y_m,
+            search.alternative_contact_z_bounds_m,
+        )
 
     ranked_plans = sorted(
         plans,
