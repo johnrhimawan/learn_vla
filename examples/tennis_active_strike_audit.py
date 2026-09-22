@@ -162,7 +162,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--split",
-        choices=("development", "final-heldout"),
+        choices=("development", "expansion-development", "final-heldout"),
         default="development",
     )
     parser.add_argument("--seed-start", type=int)
@@ -170,26 +170,55 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    final_heldout = args.split == "final-heldout"
+    profiles = {
+        "development": {
+            "seed_start": 9_000,
+            "count": 20,
+            "output": "results/tennis/active_strike_development_v1.json",
+            "audit": "phase-one-active-strike-development-v1",
+            "split_name": "test-development-prefix",
+            "gate_name": "development_gate",
+            "limitation": (
+                "This development prefix is smaller than the 200-feed "
+                "held-out gate."
+            ),
+        },
+        "expansion-development": {
+            "seed_start": 10_000,
+            "count": 200,
+            "output": (
+                "results/tennis/active_strike_v1_development_baseline_v0.json"
+            ),
+            "audit": "phase-one-active-strike-v1-development-baseline-v0",
+            "split_name": "v1-expansion-development",
+            "gate_name": "development_gate",
+            "limitation": (
+                "This 200-feed v1 development split may be used for tuning."
+            ),
+        },
+        "final-heldout": {
+            "seed_start": 12_000,
+            "count": 200,
+            "output": "results/tennis/active_strike_heldout_v0.json",
+            "audit": "phase-one-active-strike-heldout-v0",
+            "split_name": "final-heldout",
+            "gate_name": "heldout_gate",
+            "limitation": "This is the reserved 200-feed final simulation split.",
+        },
+    }
+    profile = profiles[args.split]
     if args.seed_start is None:
-        args.seed_start = 12_000 if final_heldout else 9_000
+        args.seed_start = profile["seed_start"]
     if args.count is None:
-        args.count = 200 if final_heldout else 20
+        args.count = profile["count"]
     if args.output is None:
-        args.output = Path(
-            "results/tennis/active_strike_heldout_v0.json"
-            if final_heldout
-            else "results/tennis/active_strike_development_v1.json"
-        )
+        args.output = Path(profile["output"])
     if args.count < 1 or args.workers < 1:
         raise SystemExit("count and workers must be positive")
-    audit_name = (
-        "phase-one-active-strike-heldout-v0"
-        if final_heldout
-        else "phase-one-active-strike-development-v1"
-    )
-    split_name = "final-heldout" if final_heldout else "test-development-prefix"
-    gate_name = "heldout_gate" if final_heldout else "development_gate"
+    audit_name = profile["audit"]
+    split_name = profile["split_name"]
+    gate_name = profile["gate_name"]
+    split_limitation = profile["limitation"]
 
     source = repository_state()
     seeds = range(args.seed_start, args.seed_start + args.count)
@@ -342,14 +371,7 @@ def main() -> None:
         },
         "episodes": episodes,
         "limitations": [
-            (
-                "This is the reserved 200-feed final simulation split."
-                if final_heldout
-                else (
-                    "This development prefix is smaller than the 200-feed "
-                    "held-out gate."
-                )
-            ),
+            split_limitation,
             (
                 "Planning and control use exact MuJoCo ball state and inverse "
                 "dynamics."
