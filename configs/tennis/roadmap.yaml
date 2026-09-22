@@ -64,9 +64,11 @@ milestones:
       broad_feeder_kinematic_audit: complete
       reachable_feed_curriculum: complete
       joint_limit_buffer: complete
+      collision_free_ready_pose: complete
+      floor_safe_contact_search: complete
       zero_velocity_minimum_jerk_arrival: complete
       dynamically_feasible_swing_trajectory: in_progress
-      actuator_trajectory_tracking: in_progress
+      actuator_trajectory_tracking: complete
       nonzero_contact_velocity_planning: planned
       closed_loop_contact_execution: planned
       tennis_strike_oracle_dataset: planned

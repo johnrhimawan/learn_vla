@@ -325,26 +325,34 @@ scripts/run python examples/tennis_intercept_oracle.py --seed 1
 scripts/run python examples/tennis_intercept_audit.py
 scripts/run python examples/tennis_contact_curriculum_audit.py
 scripts/run python examples/tennis_dynamic_intercept_audit.py
+scripts/run python examples/tennis_arrival_tracking_audit.py
 ```
 
 The perception plane at x=-9.25 m is an advance timing reference. It is outside
 the sampled contact workspace, so the M2 oracle searches later post-bounce
 positions and solves both racket-center position and face normal. In the first
-100 broad feeds, 52 have a
-kinematically reachable post-bounce pose; the report is in
+100 broad feeds, 42 have a buffered pose at least 0.60 m above the court; the
+report is in
 [`results/tennis/intercept_kinematic_audit_v0.json`](results/tennis/intercept_kinematic_audit_v0.json).
 The narrower contact curriculum raises held-out buffered kinematic eligibility
-to 98.0% over 200 test feeds; see
+to 96.5% over 200 test feeds; see
 [`results/tennis/contact_curriculum_kinematic_audit_v0.json`](results/tennis/contact_curriculum_kinematic_audit_v0.json).
 
-The minimum-jerk arrival planner checks the path from the home pose to each
-intercept against a 4 rad/s speed limit, a 15 rad/s^2 acceleration limit, and a
-0.03 rad joint-limit buffer. These are project simulation limits, not Sawyer
-hardware ratings. Planning from the known feeder trigger, 193 of 200 held-out
-feeds (96.5%) have a feasible zero-velocity arrival. The versioned report is
+The minimum-jerk arrival planner checks the path from a collision-free ready
+pose to each intercept against a 4 rad/s speed limit, a 15 rad/s^2 acceleration
+limit, and a 0.03 rad joint-limit buffer. These are project simulation limits,
+not Sawyer hardware ratings. Planning from the known feeder trigger, 191 of 200
+held-out feeds (95.5%) have a feasible zero-velocity arrival. The versioned
+report is
 [`results/tennis/dynamic_intercept_audit_v0.json`](results/tennis/dynamic_intercept_audit_v0.json).
-This proves analytical time-to-pose feasibility. Actuator tracking, nonzero
-contact velocity, collision checks, and executed ball contact remain M2 work.
+
+The 250 Hz controller tracks those plans in 1 kHz physics with inverse-dynamics
+feedforward. It passes 190 of 200 held-out feeds (95.0%) while checking actual
+motion limits, final pose error, joint margin, clipped commands, and unexpected
+contacts. See
+[`results/tennis/arrival_tracking_audit_v0.json`](results/tennis/arrival_tracking_audit_v0.json).
+The ball is parked for this audit and the trajectory ends at zero velocity, so
+active strike planning and executed ball contact remain M2 work.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
