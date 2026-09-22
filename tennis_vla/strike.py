@@ -569,6 +569,11 @@ def plan_safe_center_strikes(
         "approach_motion_feasible": 0,
         "approach_execution_safe": 0,
         "recovery_feasible": 0,
+        "coarse_hit_net": 0,
+        "coarse_same_side_bounce": 0,
+        "coarse_out": 0,
+        "coarse_airborne": 0,
+        "coarse_low_net_clearance": 0,
         "coarse_legal_returns": 0,
         "full_legal_returns": 0,
         "used_alternative_ik_search": False,
@@ -704,14 +709,21 @@ def plan_safe_center_strikes(
                             outgoing_velocity,
                             planning_flight,
                         )
+                        outcome_key = f"coarse_{predicted_return.outcome}"
+                        if outcome_key in planning_counts:
+                            planning_counts[outcome_key] += 1
                         bounce = predicted_return.first_bounce_m
                         if (
                             not predicted_return.legal_first_bounce
-                            or predicted_return.net_clearance_m is None
-                            or predicted_return.net_clearance_m
-                            < search.minimum_net_clearance_m
                             or bounce is None
                         ):
+                            continue
+                        if (
+                            predicted_return.net_clearance_m is None
+                            or predicted_return.net_clearance_m
+                            < search.minimum_net_clearance_m
+                        ):
+                            planning_counts["coarse_low_net_clearance"] += 1
                             continue
                         planning_counts["coarse_legal_returns"] += 1
                         landing_error = float(
