@@ -2,8 +2,11 @@
   "schema_version": 1,
   "benchmark": "randomized-color-stereo-baseline-v0",
   "evaluator_source": {
-    "git_revision": "1fa3cb298234c3849bc399fb43eff1d364a62f48",
+    "git_revision": "b02f8750639f5c25312b2582ffd8884c17cb97df",
     "tracked_files_dirty": false
+  },
+  "detector_source": {
+    "type": "fixed_rgb_ratio"
   },
   "dataset": {
     "name": "tennis-flight-v0",
@@ -21,7 +24,8 @@
   ],
   "privileged_state_used_for_scoring_only": true,
   "prediction_lead_s": 0.15,
-  "history_frames": 5,
+  "history_window_s": 0.1,
+  "maximum_stereo_ray_gap_m": 0.1,
   "metrics": {
     "frames": 43,
     "stereo_detections": 28,
@@ -31,8 +35,8 @@
     "episodes": 4,
     "contact_time_predictions": 3,
     "contact_time_prediction_rate": 0.75,
-    "contact_time_rmse_s": 0.039131550975133274,
-    "contact_time_max_error_s": 0.0656148491356856
+    "contact_time_rmse_s": 0.011866907218530993,
+    "contact_time_max_error_s": 0.0197770171699303
   },
   "split_metrics": {
     "train": {
@@ -44,8 +48,8 @@
       "episodes": 2,
       "contact_time_predictions": 2,
       "contact_time_prediction_rate": 1.0,
-      "contact_time_rmse_s": 0.0472663408980398,
-      "contact_time_max_error_s": 0.0656148491356856
+      "contact_time_rmse_s": 0.014320659695195182,
+      "contact_time_max_error_s": 0.0197770171699303
     },
     "validation": {
       "frames": 11,
@@ -56,8 +60,8 @@
       "episodes": 1,
       "contact_time_predictions": 1,
       "contact_time_prediction_rate": 1.0,
-      "contact_time_rmse_s": 0.011208072152647075,
-      "contact_time_max_error_s": 0.011208072152647075
+      "contact_time_rmse_s": 0.0035082577711014196,
+      "contact_time_max_error_s": 0.0035082577711014196
     },
     "test": {
       "frames": 11,
