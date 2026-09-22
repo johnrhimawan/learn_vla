@@ -329,6 +329,7 @@ scripts/run python examples/tennis_arrival_tracking_audit.py
 scripts/run python examples/tennis_strike_oracle.py
 scripts/run python examples/tennis_strike_execution.py
 scripts/run python examples/tennis_active_strike_audit.py --count 20 --workers 4
+scripts/run python examples/tennis_active_strike_audit.py --split final-heldout --workers 8
 ```
 
 The perception plane at x=-9.25 m is an advance timing reference. It is outside
@@ -364,7 +365,12 @@ returned the arm to its ready pose without a controller safety failure. Median
 contact-time error is 2.0 ms, median contact-position error is 1.78 cm, and
 recovery takes 1.0–1.5 s. See the
 [`development report`](results/tennis/active_strike_development_v1.json).
-The untouched 200-feed gate at seeds 12000–12199 remains M2 work.
+The first sealed 200-feed gate at seeds 12000–12199 found safe plans for 160
+feeds. All 160 contacted, landed legally, and recovered, but nine violated
+controller checks; the strict pass rate was 75.5%. See the
+[`held-out report`](results/tennis/active_strike_heldout_v0.json). Those seeds
+are retired from development. M2 now needs broader stroke coverage and stronger
+execution headroom on the new development split at seeds 10000–10199.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

@@ -235,12 +235,24 @@ rad/s^2 and its maximum final joint error is 0.00308 rad. The minimum measured
 net clearance is 0.917 m. The clean evidence is
 `results/tennis/active_strike_development_v1.json`.
 
-This completes the 20-feed development gate, not M2. Because those seeds drove
-planner corrections, the final active-strike test is reserved at seeds
-12000–12199. That untouched 200-feed audit and hardware velocity, acceleration,
-and torque limits remain before exporting `tennis-strike-oracle-v0`.
-Contact-phase acceleration is recorded but still has no hardware-derived
-acceptance gate.
+This completed the 20-feed development gate, not M2. The first sealed
+active-strike evaluation then ran once over seeds 12000–12199. The planner found
+strikes for 160 of 200 feeds. Every planned strike contacted the live ball,
+landed legally, and recovered to the ready pose, but nine executed episodes had
+controller safety failures. The final strict pass rate was 151/200 (75.5%), so
+the v0 gate failed. Failure reasons were eight acceleration violations, one
+speed violation, and two unexpected-contact flags; two episodes had both an
+acceleration and contact failure. The clean report is
+`results/tennis/active_strike_heldout_v0.json`.
+
+Seeds 12000–12199 are now retired from tuning. The v1 development range is
+10000–10199, and its future sealed evaluation is reserved at 14000–14199. The
+next iteration must expand recovery-safe stroke coverage beyond the current
+single forehand family and add more execution headroom without weakening the
+4 rad/s, 15 rad/s^2, joint-margin, command-clipping, or collision gates.
+Hardware velocity, acceleration, and torque limits also remain before exporting
+`tennis-strike-oracle-v0`. Contact-phase acceleration is recorded but still has
+no hardware-derived acceptance gate.
 
 ### M3 — Behavior-cloned visual returns
 
@@ -367,8 +379,9 @@ adapted only through a versioned action schema.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
    **Buffered floor-safe IK, zero-velocity minimum-jerk arrival, 250 Hz arrival
    tracking, a 20-feed live active-strike development gate, and bounded
-   post-strike recovery are implemented; the 200-feed held-out audit and
-   dataset export remain.**
+   post-strike recovery are implemented. The first 200-feed held-out gate
+   failed at 75.5% strict pass, so stroke-family expansion, a new sealed gate,
+   and dataset export remain.**
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
