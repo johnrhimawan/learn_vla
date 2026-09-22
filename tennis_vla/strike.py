@@ -69,6 +69,7 @@ class StrikeSearchConfig:
     planning_ball_timestep_s: float = 0.005
     maximum_returned_plans: int = 8
     trajectory_safety_sample_period_s: float = 0.01
+    post_contact_safety_horizon_s: float = 0.05
     preferred_motion_limit_utilization: float = 0.95
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
@@ -91,6 +92,8 @@ class StrikeSearchConfig:
             raise ValueError("maximum_returned_plans must be at least one")
         if self.trajectory_safety_sample_period_s <= 0.0:
             raise ValueError("trajectory safety sample period must be positive")
+        if self.post_contact_safety_horizon_s < 0.0:
+            raise ValueError("post-contact safety horizon cannot be negative")
         if not 0.0 < self.preferred_motion_limit_utilization <= 1.0:
             raise ValueError(
                 "preferred motion limit utilization must be in (0, 1]"
@@ -416,10 +419,13 @@ def trajectory_is_execution_safe(
     trajectory: QuinticJointTrajectory,
     *,
     sample_period_s: float = 0.01,
+    post_contact_time_s: float = 0.0,
 ) -> bool:
     """Reject sampled collisions and velocity-compensation command clipping."""
     if sample_period_s <= 0.0:
         raise ValueError("sample_period_s must be positive")
+    if post_contact_time_s < 0.0:
+        raise ValueError("post_contact_time_s cannot be negative")
     data = mujoco.MjData(model)
     ball_joint = model.joint("ball_free")
     ball_qpos_address = int(ball_joint.qposadr[0])
@@ -436,9 +442,19 @@ def trajectory_is_execution_safe(
     actuator_damping = -model.actuator_biasprm[:7, 2]
     control_lower = model.actuator_ctrlrange[:7, 0]
     control_upper = model.actuator_ctrlrange[:7, 1]
-    sample_count = int(np.ceil(trajectory.duration_s / sample_period_s))
-    for elapsed_s in np.linspace(0.0, trajectory.duration_s, sample_count + 1):
-        position, velocity, _ = trajectory.sample(float(elapsed_s))
+    total_duration = trajectory.duration_s + post_contact_time_s
+    sample_count = int(np.ceil(total_duration / sample_period_s))
+    terminal_position, terminal_velocity, _ = trajectory.sample(
+        trajectory.duration_s
+    )
+    for elapsed_s in np.linspace(0.0, total_duration, sample_count + 1):
+        if elapsed_s <= trajectory.duration_s:
+            position, velocity, _ = trajectory.sample(float(elapsed_s))
+        else:
+            position = terminal_position + terminal_velocity * (
+                elapsed_s - trajectory.duration_s
+            )
+            velocity = terminal_velocity
         position_command = position + actuator_damping * velocity / actuator_gain
         if np.any(position_command < control_lower) or np.any(
             position_command > control_upper
@@ -544,6 +560,9 @@ def plan_safe_center_strikes(
                             trajectory,
                             sample_period_s=(
                                 search.trajectory_safety_sample_period_s
+                            ),
+                            post_contact_time_s=(
+                                search.post_contact_safety_horizon_s
                             ),
                         ):
                             continue
