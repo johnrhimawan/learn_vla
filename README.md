@@ -304,13 +304,18 @@ can occupy one pixel. Its configuration and strict coverage-aware gates are in
 [`configs/tennis/perception_training_v0.json`](configs/tennis/perception_training_v0.json).
 
 The recorded development checkpoint was trained on 100 visual domains and
-evaluated on 40 disjoint validation/test domains. It reaches 99.26% valid
-stereo coverage, 2.52 cm 3D position RMSE, 100% timing coverage, and 18.3 ms
-contact-time RMSE. See the
+evaluated on 40 disjoint validation/test domains. On the untouched test split,
+it reaches 99.48% valid stereo coverage, 2.69 cm 3D position RMSE, 100% timing
+coverage, and 15.1 ms contact-time RMSE. See the
 [`training report`](results/tennis/ball_detector_dev_training_v0.json),
 [`evaluation report`](results/tennis/ball_detector_dev_evaluation_v0.json), and
 [`7 KB checkpoint`](checkpoints/tennis/ball_detector_dev_v0.pt). This is a
 development pass at 320×240 and 10 Hz; the production M1 gate remains open.
+The corresponding
+[`dataset report`](results/tennis/flight_dataset_dev_v0.json),
+[`preview`](results/tennis/flight_dataset_dev_preview_v0.png), and
+[`fixed-baseline comparison`](results/tennis/randomized_perception_baseline_dev_v0.json)
+make the experiment reproducible without storing its 268 MB image corpus in Git.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

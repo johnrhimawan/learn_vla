@@ -184,6 +184,8 @@ def evaluate_stereo_detector(
     minimum_prediction_rate = 0.99
     position_threshold = 0.05
     contact_time_threshold = 0.025
+    gate_split = "test" if episode_counts["test"] else "overall"
+    gate_metrics = split_metrics["test"] if gate_split == "test" else overall
     return {
         "schema_version": 1,
         "benchmark": benchmark_name,
@@ -203,25 +205,27 @@ def evaluate_stereo_detector(
         "metrics": overall,
         "split_metrics": split_metrics,
         "m1_gate_check": {
+            "evaluated_split": gate_split,
             "minimum_detection_rate": minimum_detection_rate,
-            "detection_rate_pass": overall["detection_rate"]
+            "detection_rate_pass": gate_metrics["detection_rate"]
             >= minimum_detection_rate,
             "position_rmse_threshold_m": position_threshold,
             "position_rmse_pass": (
-                overall["position_rmse_m"] is not None
-                and overall["detection_rate"] >= minimum_detection_rate
-                and overall["position_rmse_m"] <= position_threshold
+                gate_metrics["position_rmse_m"] is not None
+                and gate_metrics["detection_rate"] >= minimum_detection_rate
+                and gate_metrics["position_rmse_m"] <= position_threshold
             ),
             "minimum_contact_time_prediction_rate": minimum_prediction_rate,
             "contact_time_prediction_rate_pass": (
-                overall["contact_time_prediction_rate"] >= minimum_prediction_rate
+                gate_metrics["contact_time_prediction_rate"]
+                >= minimum_prediction_rate
             ),
             "contact_time_rmse_threshold_s": contact_time_threshold,
             "contact_time_rmse_pass": (
-                overall["contact_time_rmse_s"] is not None
-                and overall["contact_time_prediction_rate"]
+                gate_metrics["contact_time_rmse_s"] is not None
+                and gate_metrics["contact_time_prediction_rate"]
                 >= minimum_prediction_rate
-                and overall["contact_time_rmse_s"] <= contact_time_threshold
+                and gate_metrics["contact_time_rmse_s"] <= contact_time_threshold
             ),
         },
         "interpretation": (

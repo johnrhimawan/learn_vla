@@ -116,12 +116,14 @@ The first broader development experiment uses 100 training, 20 validation, and
 20 test domains at 320x240 and 10 Hz. The frozen checkpoint has 769 parameters
 and uses only RGB at inference. Calibrated stereo rejects pairs whose
 observation rays remain more than 10 cm apart, and the local velocity fit uses
-a fixed 100 ms history so its behavior does not change with frame rate. Across all 1,347
-frames, the system retains 99.26% valid stereo coverage, measures 2.52 cm 3D
-position RMSE, predicts contact for all 140 episodes, and reaches 18.3 ms
-contact-time RMSE. This passes the development numeric gate. M1 stays in
-progress until the 512x384, 50 Hz production split passes and the spin class
-and reachable intercept window are implemented.
+a fixed 100 ms history so its behavior does not change with frame rate. On the
+untouched 20-domain test split, the system retains 99.48% valid stereo coverage,
+measures 2.69 cm 3D position RMSE, predicts contact for every episode, and
+reaches 15.1 ms contact-time RMSE. This passes the development numeric gate.
+M1 stays in progress until the 512x384, 50 Hz production split passes and the
+spin class and reachable intercept window are implemented. The dataset, training,
+baseline, and learned evaluation reports are stored under `results/tennis/`,
+and the small selected checkpoint is stored under `checkpoints/tennis/`.
 
 ### M2 — Racket control and contact
 
