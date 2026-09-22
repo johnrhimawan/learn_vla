@@ -264,6 +264,11 @@ scripts/run python examples/generate_tennis_flight_dataset.py \
 
 The exact production contract is in
 [`configs/tennis/flight_dataset_v0.json`](configs/tennis/flight_dataset_v0.json).
+A revision-pinned four-episode smoke run validated 86 referenced images with no
+missing files; see
+[`results/tennis/flight_dataset_smoke_v0.json`](results/tennis/flight_dataset_smoke_v0.json)
+and its
+[`stereo preview`](results/tennis/flight_dataset_preview_v0.png).
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

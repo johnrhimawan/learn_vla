@@ -85,7 +85,9 @@ field of view, exposure, noise, and gamma sample. It writes stereo PNGs, exact
 camera calibration, ball position and velocity, bounce state, and time to the
 strike plane. Train, validation, and test episodes use non-overlapping feeder
 seed ranges. A validator checks manifest counts, split isolation, label shapes,
-and every referenced image. Spin and texture-map randomization remain open.
+and every referenced image. The tracked smoke report contains four episodes
+and 86 images generated from clean revision `de0c8e6`; every validation check
+passes. Spin and texture-map randomization remain open.
 
 ### M2 — Racket control and contact
 
