@@ -89,6 +89,7 @@ class StrikeSearchConfig:
     post_contact_safety_horizon_s: float = 0.05
     predicted_recovery_start_delay_s: float = 0.012
     recovery_duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S
+    maximum_planned_recovery_acceleration_rad_s2: float = 13.6
     preferred_motion_limit_utilization: float = 0.95
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
@@ -119,6 +120,10 @@ class StrikeSearchConfig:
             duration <= 0.0 for duration in self.recovery_duration_candidates_s
         ):
             raise ValueError("recovery duration candidates must be positive")
+        if self.maximum_planned_recovery_acceleration_rad_s2 <= 0.0:
+            raise ValueError(
+                "maximum planned recovery acceleration must be positive"
+            )
         if not 0.0 < self.preferred_motion_limit_utilization <= 1.0:
             raise ValueError(
                 "preferred motion limit utilization must be in (0, 1]"
@@ -649,7 +654,16 @@ def plan_safe_center_strikes(
                             duration_candidates_s=(
                                 search.recovery_duration_candidates_s
                             ),
-                            limits=limits,
+                            limits=SimulationJointMotionLimits(
+                                maximum_speed_rad_s=limits.maximum_speed_rad_s,
+                                maximum_acceleration_rad_s2=min(
+                                    limits.maximum_acceleration_rad_s2,
+                                    search.maximum_planned_recovery_acceleration_rad_s2,
+                                ),
+                                minimum_joint_limit_margin_rad=(
+                                    limits.minimum_joint_limit_margin_rad
+                                ),
+                            ),
                             sample_period_s=(
                                 search.trajectory_safety_sample_period_s
                             ),

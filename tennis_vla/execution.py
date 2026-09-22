@@ -64,6 +64,7 @@ class StrikeExecutionConfig:
     maximum_outgoing_velocity_error_m_s: float = 2.00
     recovery_duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S
     minimum_planned_recovery_joint_limit_margin_rad: float = 0.020
+    maximum_planned_recovery_acceleration_rad_s2: float = 13.6
     maximum_recovery_joint_tracking_error_rad: float = 0.015
     maximum_recovery_final_joint_error_rad: float = 0.010
 
@@ -81,6 +82,10 @@ class StrikeExecutionConfig:
             duration <= 0.0 for duration in self.recovery_duration_candidates_s
         ):
             raise ValueError("recovery duration candidates must be positive")
+        if self.maximum_planned_recovery_acceleration_rad_s2 <= 0.0:
+            raise ValueError(
+                "maximum planned recovery acceleration must be positive"
+            )
         if any(
             value < 0.0
             for value in (
@@ -556,7 +561,10 @@ def _plan_recovery_trajectory(
         limits=SimulationJointMotionLimits(
             maximum_speed_rad_s=config.maximum_actual_joint_speed_rad_s,
             maximum_acceleration_rad_s2=(
-                config.maximum_actual_joint_acceleration_rad_s2
+                min(
+                    config.maximum_actual_joint_acceleration_rad_s2,
+                    config.maximum_planned_recovery_acceleration_rad_s2,
+                )
             ),
             minimum_joint_limit_margin_rad=(
                 config.minimum_planned_recovery_joint_limit_margin_rad
