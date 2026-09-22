@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "audit": "canonical-active-strike-execution-v0",
+  "source": {
+    "git_revision": "6f257c3660cce851a9b3da96f63242e460561516",
+    "tracked_files_dirty": false
+  },
+  "incoming_feed": {
+    "position_m": [
+      10.5,
+      0.0,
+      1.4
+    ],
+    "velocity_m_s": [
+      -17.75,
+      0.0,
+      4.6
+    ]
+  },
+  "controller": {
+    "reference_rate_hz": 250.0,
+    "inner_control_rate_hz": 1000.0,
+    "position_feedback_nm_rad": 800.0,
+    "velocity_feedback_nm_s_rad": 80.0,
+    "maximum_post_contact_time_s": 0.05,
+    "maximum_contact_time_error_s": 0.01,
+    "maximum_contact_position_error_m": 0.05,
+    "maximum_joint_tracking_error_rad": 0.015,
+    "maximum_contact_joint_velocity_error_rad_s": 0.08,
+    "maximum_actual_joint_speed_rad_s": 4.0,
+    "maximum_actual_joint_acceleration_rad_s2": 15.0,
+    "minimum_actual_joint_limit_margin_rad": 0.02,
+    "minimum_measured_return_net_clearance_m": 0.1,
+    "maximum_outgoing_velocity_error_m_s": 1.5
+  },
+  "court_bounce_calibration": {
+    "analytical_time_s": 1.149,
+    "mujoco_separation_time_s": 1.151999999999984,
+    "analytical_position_m": [
+      -6.488736904108072,
+      0.0,
+      0.0335
+    ],
+    "mujoco_separation_position_m": [
+      -6.515699219860855,
+      -6.065676182353174e-20,
+      0.04101009819342401
+    ],
+    "analytical_velocity_m_s": [
+      -10.16378991494956,
+      0.0,
+      4.688995484070753
+    ],
+    "mujoco_separation_velocity_m_s": [
+      -10.314297192495681,
+      -3.9385279372943346e-18,
+      4.712441273976602
+    ],
+    "time_error_s": 0.0029999999999839044,
+    "position_error_m": 0.027988712825488257,
+    "velocity_error_m_s": 0.15232250542403353,
+    "passed": true
+  },
+  "analytical_strike_plan": {
+    "intercept": {
+      "time_s": 1.489,
+      "ball_position_m": [
+        -9.820059508487297,
+        0.0,
+        1.0166669643076394
+      ],
+      "ball_velocity_m_s": [
+        -9.459721597628832,
+        0.0,
+        1.1425581227941213
+      ],
+      "racket_center_target_m": [
+        -9.866185749527613,
+        0.0,
+        1.0016796400804544
+      ],
+      "ik": {
+        "converged": true,
+        "joint_positions_rad": [
+          -0.2519676535462401,
+          -0.278282023797958,
+          -0.7858781615178794,
+          -0.029337397447570027,
+          0.8853120534160905,
+          1.5766259134542346,
+          4.666890185401354
+        ],
+        "racket_position_m": [
+          -9.867103082321623,
+          0.0002734650999134478,
+          1.000766846273351
+        ],
+        "racket_normal": [
+          0.9534924539436309,
+          0.00023820635850307914,
+          0.30141679370977714
+        ],
+        "position_error_m": 0.00132267726604941,
+        "normal_error_deg": 0.45748419038082466,
+        "iterations": 13,
+        "restart": 0
+      }
+    },
+    "face_pitch_degrees": 18.0,
+    "requested_racket_normal_speed_m_s": 2.1,
+    "contact_joint_velocities_rad_s": [
+      -2.402189130348821,
+      -2.0389645172713506,
+      -3.8520220986581912,
+      3.8520220986581912,
+      -3.8520220986581912,
+      3.8520220986581912,
+      0.0
+    ],
+    "contact_racket_velocity_m_s": [
+      1.9972186842198227,
+      0.0,
+      0.6489356881873897
+    ],
+    "outgoing_ball_velocity_m_s": [
+      9.041225766272683,
+      0.004106799587006342,
+      6.250285939540056
+    ],
+    "predicted_net_clearance_m": 0.11594177791055316,
+    "predicted_first_bounce_m": [
+      1.1520436160500547,
+      0.004983862779816126,
+      0.0335
+    ],
+    "predicted_legal_return": true,
+    "landing_target_xy_m": [
+      4.0,
+      0.0
+    ],
+    "landing_error_m": 2.8479607447732596,
+    "trajectory": {
+      "duration_s": 1.489,
+      "start_joint_positions_rad": [
+        -0.04168706145607054,
+        -0.8169774398390002,
+        -0.3227214808141803,
+        1.3621882414605269,
+        0.26116175300348615,
+        1.0734506385100289,
+        4.435779923828908
+      ],
+      "contact_joint_positions_rad": [
+        -0.2519676535462401,
+        -0.278282023797958,
+        -0.7858781615178794,
+        -0.029337397447570027,
+        0.8853120534160905,
+        1.5766259134542346,
+        4.666890185401354
+      ],
+      "peak_joint_speeds_rad_s": [
+        2.402189130348827,
+        2.0389645172713546,
+        3.8520220986581917,
+        3.852022098658182,
+        3.852022098658182,
+        3.852022098658201,
+        0.2910219882124491
+      ],
+      "peak_joint_accelerations_rad_s2": [
+        5.8196724704424065,
+        6.780263623669188,
+        9.011502128752769,
+        13.77408260191581,
+        11.795476137558918,
+        8.909791291373912,
+        0.6018235889305845
+      ],
+      "maximum_joint_speed_rad_s": 3.852022098658201,
+      "maximum_joint_acceleration_rad_s2": 13.77408260191581,
+      "minimum_joint_limit_margin_rad": 0.04550981459864545
+    }
+  },
+  "mujoco_execution": {
+    "contacted": true,
+    "separated": true,
+    "planned_contact_time_s": 1.489,
+    "actual_contact_time_s": 1.486999999999947,
+    "separation_time_s": 1.496999999999946,
+    "actual_contact_ball_position_m": [
+      -9.845374613567886,
+      1.7432042071233286e-05,
+      1.0238569233612864
+    ],
+    "incoming_ball_velocity_m_s": [
+      -9.601643699772076,
+      -3.666400264577507e-18,
+      1.2214922245377053
+    ],
+    "actual_contact_racket_velocity_m_s": [
+      1.9718540659094281,
+      0.1331710561074484,
+      0.7369286849278248
+    ],
+    "outgoing_ball_position_m": [
+      -9.811853806928378,
+      0.000522445211614733,
+      1.079513646077447
+    ],
+    "outgoing_ball_velocity_m_s": [
+      8.765728306187917,
+      0.015928779965486178,
+      7.331582485428362
+    ],
+    "outgoing_velocity_error_m_s": 1.115903593453847,
+    "contact_time_error_s": 0.0020000000000530704,
+    "contact_position_error_m": 0.02631635157673756,
+    "maximum_joint_tracking_error_rad": 0.00862093750272841,
+    "contact_joint_position_error_rad": 0.011845045510266088,
+    "contact_joint_velocity_error_rad_s": 0.03523251763200186,
+    "maximum_actual_joint_speed_rad_s": 3.8891235636243935,
+    "maximum_pre_contact_joint_acceleration_rad_s2": 14.822718108847102,
+    "maximum_contact_phase_joint_acceleration_rad_s2": 47.711713283727754,
+    "maximum_applied_torque_nm": 57.48411102062823,
+    "minimum_actual_joint_limit_margin_rad": 0.04532891912667214,
+    "clipped_control_steps": 0,
+    "unexpected_contact_steps": 0,
+    "measured_return": {
+      "duration_s": 2.0,
+      "samples": 2001,
+      "net_crossing_m": [
+        0.0,
+        0.018352,
+        2.076837
+      ],
+      "first_bounce_m": [
+        2.122049,
+        0.022208,
+        0.0335
+      ],
+      "bounce_count": 1,
+      "hit_net": false,
+      "net_clearance_m": 1.128815,
+      "legal_first_bounce": true,
+      "outcome": "legal_first_bounce",
+      "maximum_height_m": 3.564826,
+      "final_speed_m_s": 5.295259
+    },
+    "passed": true,
+    "failure_reasons": []
+  },
+  "passed": true,
+  "limitations": [
+    "This is one canonical feed, not a held-out feed-envelope audit.",
+    "The controller uses exact ball state and privileged inverse dynamics.",
+    "The measured outgoing state is continued with the analytical flight model.",
+    "The contact trajectory stops after separation and has no recovery motion.",
+    "The 47.7 rad/s^2 contact-phase peak has no hardware gate.",
+    "Spin and calibrated string-bed response are not modeled."
+  ]
+}
