@@ -2,8 +2,8 @@
   "schema_version": 1,
   "audit": "phase-one-contact-minimum-jerk-arrival-v0",
   "source": {
-    "git_revision": "cb601618f1a796832c696289554465a73efdb9d1",
-    "tracked_files_dirty": true
+    "git_revision": "d99d22107fa104ad2011bc13d1348167e05bc7da",
+    "tracked_files_dirty": false
   },
   "planning_start": {
     "time_s": 0.0,
