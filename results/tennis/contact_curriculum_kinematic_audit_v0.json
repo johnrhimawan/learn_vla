@@ -2,8 +2,8 @@
   "schema_version": 1,
   "audit": "phase-one-contact-curriculum-kinematic-v0",
   "source": {
-    "git_revision": "cb601618f1a796832c696289554465a73efdb9d1",
-    "tracked_files_dirty": true
+    "git_revision": "953c82ed23823709041166063cace24f81c99876",
+    "tracked_files_dirty": false
   },
   "envelope": {
     "source_x_m": [
