@@ -170,7 +170,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--split",
-        choices=("development", "expansion-development", "final-heldout"),
+        choices=(
+            "development",
+            "expansion-development",
+            "expanded-development",
+            "final-heldout",
+        ),
         default="development",
     )
     parser.add_argument("--seed-start", type=int)
@@ -198,6 +203,19 @@ def main() -> None:
                 "results/tennis/active_strike_v1_development_baseline_v0.json"
             ),
             "audit": "phase-one-active-strike-v1-development-baseline-v0",
+            "split_name": "v1-expansion-development",
+            "gate_name": "development_gate",
+            "limitation": (
+                "This 200-feed v1 development split may be used for tuning."
+            ),
+        },
+        "expanded-development": {
+            "seed_start": 10_000,
+            "count": 200,
+            "output": (
+                "results/tennis/active_strike_v1_expanded_development_v0.json"
+            ),
+            "audit": "phase-one-active-strike-v1-expanded-development-v0",
             "split_name": "v1-expansion-development",
             "gate_name": "development_gate",
             "limitation": (
