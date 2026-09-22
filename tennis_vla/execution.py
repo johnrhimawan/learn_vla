@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from typing import Any
 
@@ -19,6 +20,12 @@ from .strike import (
     plan_ready_recovery_trajectory,
 )
 from .trajectory import SimulationJointMotionLimits
+
+
+# Optional read-only hook called after every physics step.  It exists so
+# renderers can capture the executed motion without duplicating the
+# controller; it must never mutate ``data``.
+StepObserver = Callable[[float, mujoco.MjData], None]
 
 
 @dataclass(frozen=True)
@@ -580,6 +587,7 @@ def _execute_recovery(
     *,
     config: StrikeExecutionConfig,
     flight_config: BallFlightConfig,
+    observer: StepObserver | None = None,
 ) -> StrikeRecoveryResult:
     """Plan and execute a bounded recovery on the live post-strike state."""
     planned = _plan_recovery_trajectory(
@@ -665,6 +673,8 @@ def _execute_recovery(
         data.qfrc_applied[:7] = applied_torque
         apply_ball_drag(model, data, flight_config)
         mujoco.mj_step(model, data)
+        if observer is not None:
+            observer(float(data.time), data)
 
         expected_position, _, _ = _interpolated_trajectory_reference(
             trajectory,
@@ -748,6 +758,7 @@ def execute_strike(
     *,
     config: StrikeExecutionConfig | None = None,
     flight_config: BallFlightConfig | None = None,
+    observer: StepObserver | None = None,
 ) -> StrikeExecutionResult:
     """Track one planned strike through contact and a bounded recovery.
 
@@ -755,6 +766,10 @@ def execute_strike(
     interpolates them and applies rigid-body inverse dynamics plus feedback.
     After measuring ball separation, a separately screened trajectory returns
     the arm from its measured joint state to the ready pose.
+
+    ``observer`` is an optional read-only hook invoked after each 1 kHz step
+    of both the strike and the recovery.  It does not affect the simulation
+    and exists so renderers can record the executed motion.
     """
     config = config or StrikeExecutionConfig()
     flight_config = flight_config or BallFlightConfig()
@@ -853,6 +868,8 @@ def execute_strike(
             dof_address : dof_address + 3
         ].copy()
         mujoco.mj_step(model, data)
+        if observer is not None:
+            observer(float(data.time), data)
 
         expected_position, _, _ = _interpolated_reference(
             plan, float(data.time), reference_period
@@ -970,6 +987,7 @@ def execute_strike(
             inverse_data,
             config=config,
             flight_config=flight_config,
+            observer=observer,
         )
     )
 
