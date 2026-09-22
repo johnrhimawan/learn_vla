@@ -236,6 +236,35 @@ ahead, and writes a versioned report to
 to score the predictions. The canonical baseline is the start of M1; learned
 tracking under randomized appearance and camera conditions is the next gate.
 
+Generate a local randomized `tennis-flight-v0` perception dataset:
+
+```bash
+scripts/run python examples/generate_tennis_flight_dataset.py \
+  --output artifacts/tennis-flight-v0 \
+  --preview artifacts/tennis-flight-v0-preview.png
+```
+
+The default run creates 10 training, 3 validation, and 3 test episodes at
+512×384 and 50 Hz. Each frame has two RGB images plus exact 3D position,
+velocity, bounce state, and time-to-strike-plane labels. Each episode also has
+its sampled visual domain and both camera calibrations. The split seed ranges
+do not overlap. These privileged values are training targets and evaluation
+labels; they are not visual-policy inputs.
+
+For the planned production corpus on a machine with ample storage:
+
+```bash
+scripts/run python examples/generate_tennis_flight_dataset.py \
+  --output /path/to/tennis-flight-v0 \
+  --train-episodes 1000 \
+  --validation-episodes 100 \
+  --test-episodes 100 \
+  --preview /path/to/tennis-flight-v0-preview.png
+```
+
+The exact production contract is in
+[`configs/tennis/flight_dataset_v0.json`](configs/tennis/flight_dataset_v0.json).
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous

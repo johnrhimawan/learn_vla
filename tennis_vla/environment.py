@@ -14,6 +14,25 @@ from .court import TennisCourtSpec
 from .impact import RacketImpactConfig
 
 
+STEREO_CAMERA_TARGET_M = (-6.5, 0.0, 1.0)
+STEREO_CAMERA_POSITIONS_M = (
+    (-12.5, -5.5, 3.4),
+    (-12.5, 5.5, 3.4),
+)
+STEREO_CAMERA_FOVY_DEG = 55.0
+COURT_LINE_GEOMS = (
+    "near_baseline",
+    "far_baseline",
+    "left_doubles_sideline",
+    "right_doubles_sideline",
+    "left_singles_sideline",
+    "right_singles_sideline",
+    "near_service_line",
+    "far_service_line",
+    "center_service_line",
+)
+
+
 @dataclass(frozen=True)
 class RacketContactProbe:
     contacted: bool
@@ -47,6 +66,57 @@ def _camera_xyaxes(
     return np.concatenate((right, up)).tolist()
 
 
+def _add_court_markings(world: mujoco.MjsBody, court: TennisCourtSpec) -> None:
+    """Add visual-only regulation lines without changing ball contact."""
+    half_length = court.half_length_m
+    singles_half_width = court.singles_half_width_m
+    doubles_half_width = court.doubles_half_width_m
+    service = court.service_line_from_net_m
+    line_rgba = [0.95, 0.95, 0.92, 1.0]
+    line_height = 0.004
+    cross_court_lines = (
+        ("near_baseline", -half_length, doubles_half_width, 0.025),
+        ("far_baseline", half_length, doubles_half_width, 0.025),
+        ("near_service_line", -service, singles_half_width, 0.018),
+        ("far_service_line", service, singles_half_width, 0.018),
+    )
+    for name, x_position, half_width, half_thickness in cross_court_lines:
+        world.add_geom(
+            name=name,
+            type=mujoco.mjtGeom.mjGEOM_BOX,
+            pos=[x_position, 0.0, line_height],
+            size=[half_thickness, half_width, line_height],
+            rgba=line_rgba,
+            contype=0,
+            conaffinity=0,
+        )
+    side_lines = (
+        ("left_doubles_sideline", -doubles_half_width, 0.025),
+        ("right_doubles_sideline", doubles_half_width, 0.025),
+        ("left_singles_sideline", -singles_half_width, 0.018),
+        ("right_singles_sideline", singles_half_width, 0.018),
+    )
+    for name, y_position, half_thickness in side_lines:
+        world.add_geom(
+            name=name,
+            type=mujoco.mjtGeom.mjGEOM_BOX,
+            pos=[0.0, y_position, line_height],
+            size=[half_length, half_thickness, line_height],
+            rgba=line_rgba,
+            contype=0,
+            conaffinity=0,
+        )
+    world.add_geom(
+        name="center_service_line",
+        type=mujoco.mjtGeom.mjGEOM_BOX,
+        pos=[0.0, 0.0, line_height],
+        size=[service, 0.018, line_height],
+        rgba=line_rgba,
+        contype=0,
+        conaffinity=0,
+    )
+
+
 def make_tennis_contact_model(
     racket_solref: tuple[float, float] = (-100_000.0, -50.0),
 ) -> mujoco.MjModel:
@@ -71,6 +141,7 @@ def make_tennis_contact_model(
         contype=1,
         conaffinity=1,
     )
+    _add_court_markings(world, court)
     world.add_geom(
         name="tennis_net",
         type=mujoco.mjtGeom.mjGEOM_BOX,
@@ -112,20 +183,20 @@ def make_tennis_contact_model(
     )
     # The stereo pair sits behind the near baseline and converges on the
     # arm's receiving half. This keeps both the bounce and strike zone in view.
-    camera_target = np.array([-6.5, 0.0, 1.0])
-    camera1_position = np.array([-12.5, -5.5, 3.4])
-    camera2_position = np.array([-12.5, 5.5, 3.4])
+    camera_target = np.asarray(STEREO_CAMERA_TARGET_M, dtype=np.float64)
+    camera1_position = np.asarray(STEREO_CAMERA_POSITIONS_M[0], dtype=np.float64)
+    camera2_position = np.asarray(STEREO_CAMERA_POSITIONS_M[1], dtype=np.float64)
     world.add_camera(
         name="camera1",
         pos=camera1_position.tolist(),
         xyaxes=_camera_xyaxes(camera1_position, camera_target),
-        fovy=55.0,
+        fovy=STEREO_CAMERA_FOVY_DEG,
     )
     world.add_camera(
         name="camera2",
         pos=camera2_position.tolist(),
         xyaxes=_camera_xyaxes(camera2_position, camera_target),
-        fovy=55.0,
+        fovy=STEREO_CAMERA_FOVY_DEG,
     )
     return spec.compile()
 

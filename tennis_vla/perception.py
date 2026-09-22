@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import mujoco
 import numpy as np
@@ -25,6 +26,33 @@ class BallTrackEstimate:
     time_s: float
     position_m: np.ndarray
     velocity_m_s: np.ndarray
+
+
+def camera_calibration(
+    model: mujoco.MjModel,
+    data: mujoco.MjData,
+    camera_name: str,
+    image_shape: tuple[int, int],
+) -> dict[str, Any]:
+    """Export the intrinsics and world pose used by :func:`camera_ray`."""
+    height, width = image_shape
+    camera_id = model.camera(camera_name).id
+    fovy_deg = float(model.cam_fovy[camera_id])
+    focal_px = float(0.5 * height / np.tan(0.5 * np.deg2rad(fovy_deg)))
+    principal_point = [(width - 1) / 2.0, (height - 1) / 2.0]
+    return {
+        "image_size_px": [width, height],
+        "fovy_deg": fovy_deg,
+        "focal_length_px": [focal_px, focal_px],
+        "principal_point_px": principal_point,
+        "camera_origin_world_m": data.cam_xpos[camera_id].tolist(),
+        "camera_to_world_rotation": data.cam_xmat[camera_id]
+        .reshape(3, 3)
+        .tolist(),
+        "projection_convention": (
+            "camera looks along -z; u=cx+f*x/(-z); v=cy-f*y/(-z)"
+        ),
+    }
 
 
 def detect_yellow_ball(image: np.ndarray) -> BallDetection | None:

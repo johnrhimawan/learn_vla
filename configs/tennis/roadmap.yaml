@@ -44,7 +44,9 @@ milestones:
       canonical_color_segmentation: complete
       ray_triangulation: complete
       local_contact_time_prediction: complete
-      randomized_render_dataset: planned
+      randomized_render_dataset_generator: complete
+      randomized_render_smoke_validation: complete
+      production_randomized_render_dataset: planned
       learned_detector_and_temporal_estimator: planned
       spin_classification: planned
       reachable_intercept_window: planned

@@ -8,6 +8,7 @@ dependencies = [
     "lerobot[smolvla,training]==0.6.1",
     "mujoco==3.13.0",
     "mujoco-menagerie==2026.9.0",
+    "pillow==12.3.0",
 ]
 
 [tool.uv]

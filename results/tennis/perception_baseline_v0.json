@@ -24,13 +24,13 @@
     "frames": 450,
     "detected_frames": 450,
     "detection_rate": 1.0,
-    "position_rmse_m": 0.005830726424295006,
+    "position_rmse_m": 0.00588197738338305,
     "position_p95_error_m": 0.01044662378851863,
     "contact_time_predictions": 25,
     "minimum_prediction_horizon_s": 0.15952901646403572,
-    "contact_time_mae_s": 0.00740603596313524,
-    "contact_time_rmse_s": 0.010630969533500706,
-    "contact_time_max_error_s": 0.032020651455148874
+    "contact_time_mae_s": 0.007441883652756589,
+    "contact_time_rmse_s": 0.010677545668390284,
+    "contact_time_max_error_s": 0.03221893366177664
   },
   "m1_gate_check": {
     "position_rmse_threshold_m": 0.05,
@@ -43,19 +43,19 @@
       "seed": 7000,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.006497263095622446,
+      "position_rmse_m": 0.006431141355979326,
       "true_contact_time_s": 1.615334553681006,
-      "predicted_contact_time_s": 1.6098690130215498,
-      "contact_time_error_s": 0.005465540659456147
+      "predicted_contact_time_s": 1.6103254544583518,
+      "contact_time_error_s": 0.005009099222654134
     },
     {
       "seed": 7001,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005613663084202218,
+      "position_rmse_m": 0.005628300791980002,
       "true_contact_time_s": 1.4813990070434297,
-      "predicted_contact_time_s": 1.4762701532573206,
-      "contact_time_error_s": 0.0051288537861091665
+      "predicted_contact_time_s": 1.475915423258797,
+      "contact_time_error_s": 0.005483583784632762
     },
     {
       "seed": 7002,
@@ -70,19 +70,19 @@
       "seed": 7003,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005048784553394577,
+      "position_rmse_m": 0.004596273119929119,
       "true_contact_time_s": 1.8360690685981533,
-      "predicted_contact_time_s": 1.833129208156548,
-      "contact_time_error_s": 0.0029398604416053242
+      "predicted_contact_time_s": 1.8335068713570666,
+      "contact_time_error_s": 0.00256219724108675
     },
     {
       "seed": 7004,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.00512140103063116,
+      "position_rmse_m": 0.0053912297253957955,
       "true_contact_time_s": 1.6820960900798363,
-      "predicted_contact_time_s": 1.6788902836107458,
-      "contact_time_error_s": 0.003205806469090522
+      "predicted_contact_time_s": 1.6790092759479434,
+      "contact_time_error_s": 0.0030868141318929343
     },
     {
       "seed": 7005,
@@ -115,16 +115,16 @@
       "seed": 7008,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005848490217534789,
+      "position_rmse_m": 0.005873160348181885,
       "true_contact_time_s": 1.6388610422740288,
-      "predicted_contact_time_s": 1.635158590535054,
-      "contact_time_error_s": 0.0037024517389747658
+      "predicted_contact_time_s": 1.635136980565086,
+      "contact_time_error_s": 0.003724061708942905
     },
     {
       "seed": 7009,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005568073530624133,
+      "position_rmse_m": 0.005515570730904175,
       "true_contact_time_s": 1.460661722510229,
       "predicted_contact_time_s": 1.4560933733581436,
       "contact_time_error_s": 0.004568349152085371
@@ -133,10 +133,10 @@
       "seed": 7010,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.006320493694023906,
+      "position_rmse_m": 0.006483220429316013,
       "true_contact_time_s": 1.3564611859095717,
-      "predicted_contact_time_s": 1.3346915206566063,
-      "contact_time_error_s": 0.02176966525296531
+      "predicted_contact_time_s": 1.334539071069488,
+      "contact_time_error_s": 0.021922114840083662
     },
     {
       "seed": 7011,
@@ -169,19 +169,19 @@
       "seed": 7014,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.00546063865106457,
+      "position_rmse_m": 0.00553738135875946,
       "true_contact_time_s": 1.5421785182905339,
-      "predicted_contact_time_s": 1.5382039182306828,
-      "contact_time_error_s": 0.003974600059851063
+      "predicted_contact_time_s": 1.5379863468079402,
+      "contact_time_error_s": 0.004192171482593654
     },
     {
       "seed": 7015,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.0051575031357134985,
+      "position_rmse_m": 0.005339041402810517,
       "true_contact_time_s": 1.683869139995181,
-      "predicted_contact_time_s": 1.6807039171581115,
-      "contact_time_error_s": 0.003165222837069548
+      "predicted_contact_time_s": 1.6801618936186995,
+      "contact_time_error_s": 0.0037072463764815655
     },
     {
       "seed": 7016,
@@ -196,16 +196,16 @@
       "seed": 7017,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.007500812860626397,
+      "position_rmse_m": 0.007531350770055165,
       "true_contact_time_s": 1.1984419242076798,
-      "predicted_contact_time_s": 1.193014530963872,
-      "contact_time_error_s": 0.00542739324380781
+      "predicted_contact_time_s": 1.1928009374044681,
+      "contact_time_error_s": 0.005640986803211678
     },
     {
       "seed": 7018,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.006424531664280591,
+      "position_rmse_m": 0.006915438634666023,
       "true_contact_time_s": 1.2699395165726257,
       "predicted_contact_time_s": 1.2476317257832206,
       "contact_time_error_s": 0.022307790789405146
@@ -223,16 +223,16 @@
       "seed": 7020,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005754144498231314,
+      "position_rmse_m": 0.005750451629249447,
       "true_contact_time_s": 1.3858520602391775,
-      "predicted_contact_time_s": 1.3817997354799494,
-      "contact_time_error_s": 0.004052324759228121
+      "predicted_contact_time_s": 1.3816507065486938,
+      "contact_time_error_s": 0.004201353690483689
     },
     {
       "seed": 7021,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.00543459394967088,
+      "position_rmse_m": 0.005783742755510352,
       "true_contact_time_s": 1.7122727240647941,
       "predicted_contact_time_s": 1.7078916365957488,
       "contact_time_error_s": 0.004381087469045308
@@ -250,10 +250,10 @@
       "seed": 7023,
       "frames": 18,
       "detections": 18,
-      "position_rmse_m": 0.005256202387669709,
+      "position_rmse_m": 0.005424998358631302,
       "true_contact_time_s": 1.3525443280016476,
-      "predicted_contact_time_s": 1.3205236765464987,
-      "contact_time_error_s": 0.032020651455148874
+      "predicted_contact_time_s": 1.320325394339871,
+      "contact_time_error_s": 0.03221893366177664
     },
     {
       "seed": 7024,

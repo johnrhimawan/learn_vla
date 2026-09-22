@@ -1,0 +1,47 @@
+{
+  "dataset": "tennis-flight-v0",
+  "schema_version": 1,
+  "observation_hz": 50.0,
+  "image_size_px": [512, 384],
+  "trajectory_window": {
+    "start_plane_x_m": 2.0,
+    "strike_plane_x_m": -9.25
+  },
+  "split_seed_bases": {
+    "train": 1000,
+    "validation": 6000,
+    "test": 7000
+  },
+  "production_episode_counts": {
+    "train": 1000,
+    "validation": 100,
+    "test": 100
+  },
+  "randomized_per_episode": [
+    "court_color",
+    "line_color",
+    "ball_color",
+    "net_color",
+    "ambient_light",
+    "diffuse_light",
+    "specular_light",
+    "camera_position",
+    "camera_aim",
+    "vertical_field_of_view",
+    "exposure_time",
+    "sensor_noise",
+    "gamma"
+  ],
+  "privileged_labels": [
+    "ball.position_world_m",
+    "ball.velocity_world_m_s",
+    "ball.spin_class",
+    "ball.bounce_occurred",
+    "prediction_targets.time_to_strike_plane_s"
+  ],
+  "known_limitations": [
+    "no spin dynamics or spin labels beyond the none class",
+    "no texture-map randomization",
+    "three-subframe approximation to exposure blur"
+  ]
+}

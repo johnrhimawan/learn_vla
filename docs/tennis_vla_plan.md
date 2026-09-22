@@ -72,12 +72,20 @@ RMSE at most 25 ms over the phase-one feeder envelope.
 The first canonical-rendering baseline is implemented. Two calibrated cameras
 behind the near baseline feed an illumination-tolerant color segmenter, ray
 triangulator, and five-frame local velocity fit. On 25 held-out feeder seeds it
-detected all 450 stereo frames, measured 5.8 mm 3D position RMSE, and predicted
-the x=-9.25 m strike-plane crossing at least 150 ms ahead with 10.6 ms RMSE.
+detected all 450 stereo frames, measured 5.9 mm 3D position RMSE, and predicted
+the x=-9.25 m strike-plane crossing at least 150 ms ahead with 10.7 ms RMSE.
 These figures pass the numeric thresholds in the canonical scene, but M1
 remains open: the baseline has no domain randomization, motion blur, spin
 classifier, or learned temporal model. The versioned report is
 `results/tennis/perception_baseline_v0.json`.
+
+The `tennis-flight-v0` generator now provides the next M1 data layer. Each
+episode receives its own court, line, ball, net, lighting, camera pose,
+field of view, exposure, noise, and gamma sample. It writes stereo PNGs, exact
+camera calibration, ball position and velocity, bounce state, and time to the
+strike plane. Train, validation, and test episodes use non-overlapping feeder
+seed ranges. A validator checks manifest counts, split isolation, label shapes,
+and every referenced image. Spin and texture-map randomization remain open.
 
 ### M2 — Racket control and contact
 
@@ -208,7 +216,9 @@ adapted only through a versioned action schema.
 5. Add the calibrated stereo scene and canonical ball-tracking benchmark.
    **Implemented; M1 remains in progress.**
 6. Generate `tennis-flight-v0` with held-out lighting, texture, camera, blur,
-   ball-color, and physics splits; train the learned M1 estimator.
+   ball-color, and physics splits; train the learned M1 estimator. **The
+   generator, calibration export, blur model, split discipline, and smoke
+   validator are implemented; production generation and learning remain.**
 7. Add calibrated spin and string-bed response.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
 
