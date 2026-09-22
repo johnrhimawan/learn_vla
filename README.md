@@ -317,6 +317,22 @@ The corresponding
 [`fixed-baseline comparison`](results/tennis/randomized_perception_baseline_dev_v0.json)
 make the experiment reproducible without storing its 268 MB image corpus in Git.
 
+Find privileged kinematic racket intercepts for one deterministic feed, or
+audit the broad feeder envelope:
+
+```bash
+scripts/run python examples/tennis_intercept_oracle.py --seed 1
+scripts/run python examples/tennis_intercept_audit.py
+```
+
+The perception plane at x=-9.25 m is an advance timing reference. It is outside
+the sampled contact workspace, so the M2 oracle searches later post-bounce
+positions and solves both racket-center position and face normal. The current
+audit is intentionally kinematic; speed, acceleration, collision-free swing,
+and executed contact remain M2 work. In the first 100 broad feeds, 52 have a
+kinematically reachable post-bounce pose; the report is in
+[`results/tennis/intercept_kinematic_audit_v0.json`](results/tennis/intercept_kinematic_audit_v0.json).
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous

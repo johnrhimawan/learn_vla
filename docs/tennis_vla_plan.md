@@ -79,6 +79,10 @@ remains open: the baseline has no domain randomization, motion blur, spin
 classifier, or learned temporal model. The versioned report is
 `results/tennis/perception_baseline_v0.json`.
 
+The x=-9.25 m plane is an early timing reference, not a commanded racket pose.
+The arm workspace audit found no sampled racket centers at that plane. M2 must
+choose a later contact pose from the reachable post-bounce trajectory.
+
 The `tennis-flight-v0` generator now provides the next M1 data layer. Each
 episode receives its own court, line, ball, net, lighting, camera pose,
 field of view, exposure, noise, and gamma sample. It writes stereo PNGs, exact
@@ -135,6 +139,17 @@ generator.
 
 Exit gate: at least 95% racket contact, no joint-limit or workspace violations,
 and reproducible outgoing-ball speed for held-out feeder seeds.
+
+The first privileged oracle layer now solves racket-center position and face
+normal with damped least-squares inverse kinematics and deterministic restarts.
+It searches post-bounce ball trajectories for contact poses, including the ball
+radius and racket thickness offset. This is a kinematic filter only; the next
+step must enforce joint speed, acceleration, collision, and swing preparation.
+Across the first 100 broad feeder seeds, 52 have at least one such pose. Their
+first reachable ball positions span x=-10.06 to -9.53 m, y=-0.94 to 1.04 m,
+and z=0.20 to 1.31 m. The result is recorded in
+`results/tennis/intercept_kinematic_audit_v0.json`. This 52% ceiling is evidence
+for a restricted M2 feeder curriculum; it is not a contact-rate result.
 
 ### M3 — Behavior-cloned visual returns
 

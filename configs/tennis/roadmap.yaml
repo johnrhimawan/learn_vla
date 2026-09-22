@@ -56,8 +56,16 @@ milestones:
       reachable_intercept_window: planned
   - id: M2
     name: stationary_and_fed_ball_contact
-    status: planned
+    status: in_progress
     exit_gate: Contact rate >= 0.95 across the held-out feeder envelope.
+    work_items:
+      racket_pose_inverse_kinematics: complete
+      privileged_kinematic_intercept_search: complete
+      broad_feeder_kinematic_audit: complete
+      reachable_feed_curriculum: planned
+      dynamically_feasible_swing_trajectory: planned
+      closed_loop_contact_execution: planned
+      tennis_strike_oracle_dataset: planned
   - id: M3
     name: behavior_cloned_returns
     status: planned
