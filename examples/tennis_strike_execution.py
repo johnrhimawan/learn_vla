@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("results/tennis/canonical_strike_execution_v0.json"),
+        default=Path("results/tennis/canonical_strike_execution_v1.json"),
     )
     args = parser.parse_args()
 
@@ -86,8 +86,8 @@ def main() -> None:
         config=execution_config,
     )
     report = {
-        "schema_version": 1,
-        "audit": "canonical-active-strike-execution-v0",
+        "schema_version": 2,
+        "audit": "canonical-active-strike-execution-v1",
         "source": repository_state(),
         "incoming_feed": {
             "position_m": CANONICAL_POSITION_M.tolist(),
@@ -106,7 +106,7 @@ def main() -> None:
             "This is one canonical feed, not a held-out feed-envelope audit.",
             "The controller uses exact ball state and privileged inverse dynamics.",
             "The measured outgoing state is continued with the analytical flight model.",
-            "The contact trajectory stops after separation and has no recovery motion.",
+            "Recovery uses privileged joint state and one fixed ready pose.",
             (
                 f"The {execution.maximum_contact_phase_joint_acceleration_rad_s2:.1f} "
                 "rad/s^2 contact-phase peak has no hardware gate."

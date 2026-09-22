@@ -33,6 +33,14 @@ SAFETY_FAILURES = {
     "joint_limit_margin",
     "clipped_control",
     "unexpected_contact",
+    "recovery_no_feasible_plan",
+    "recovery_joint_tracking",
+    "recovery_final_joint_error",
+    "recovery_actual_joint_speed",
+    "recovery_actual_joint_acceleration",
+    "recovery_joint_limit_margin",
+    "recovery_clipped_control",
+    "recovery_unexpected_contact",
 }
 
 
@@ -97,6 +105,7 @@ def audit_seed(seed: int) -> dict[str, Any]:
         "execution": None,
         "contacted": False,
         "legal_return": False,
+        "recovered": False,
         "controller_safe": True,
         "strict_pass": False,
     }
@@ -139,6 +148,9 @@ def audit_seed(seed: int) -> dict[str, Any]:
         execution.measured_return is not None
         and execution.measured_return.legal_first_bounce
     )
+    result["recovered"] = bool(
+        execution.recovery is not None and execution.recovery.passed
+    )
     result["controller_safe"] = not bool(
         SAFETY_FAILURES.intersection(execution.failure_reasons)
     )
@@ -154,7 +166,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("results/tennis/active_strike_development_v0.json"),
+        default=Path("results/tennis/active_strike_development_v1.json"),
     )
     args = parser.parse_args()
     if args.count < 1 or args.workers < 1:
@@ -175,6 +187,7 @@ def main() -> None:
                         "planned": episode["planned"],
                         "contacted": episode["contacted"],
                         "legal_return": episode["legal_return"],
+                        "recovered": episode["recovered"],
                         "controller_safe": episode["controller_safe"],
                         "strict_pass": episode["strict_pass"],
                     }
@@ -186,6 +199,7 @@ def main() -> None:
     planned = sum(episode["planned"] for episode in episodes)
     contacted = sum(episode["contacted"] for episode in episodes)
     legal_returns = sum(episode["legal_return"] for episode in episodes)
+    recovered = sum(episode["recovered"] for episode in episodes)
     controller_safe = sum(episode["controller_safe"] for episode in episodes)
     strict_passes = sum(episode["strict_pass"] for episode in episodes)
     execution_failures: Counter[str] = Counter()
@@ -202,8 +216,8 @@ def main() -> None:
         ]
 
     report = {
-        "schema_version": 1,
-        "audit": "phase-one-active-strike-development-v0",
+        "schema_version": 2,
+        "audit": "phase-one-active-strike-development-v1",
         "source": source,
         "split": {
             "name": "test-development-prefix",
@@ -223,6 +237,8 @@ def main() -> None:
             "contact_fraction": contacted / args.count,
             "legal_returns": legal_returns,
             "legal_return_fraction": legal_returns / args.count,
+            "recovered": recovered,
+            "recovery_fraction": recovered / args.count,
             "controller_safe": controller_safe,
             "controller_safe_fraction": controller_safe / args.count,
             "strict_passes": strict_passes,
@@ -240,6 +256,48 @@ def main() -> None:
             "maximum_joint_tracking_error_rad": distribution(
                 execution_values("maximum_joint_tracking_error_rad")
             ),
+            "recovery_duration_s": distribution(
+                [
+                    float(episode["execution"]["recovery"]["duration_s"])
+                    for episode in episodes
+                    if episode["execution"] is not None
+                    and episode["execution"]["recovery"] is not None
+                    and episode["execution"]["recovery"]["duration_s"]
+                    is not None
+                ]
+            ),
+            "recovery_final_joint_error_rad": distribution(
+                [
+                    float(
+                        episode["execution"]["recovery"][
+                            "final_joint_error_rad"
+                        ]
+                    )
+                    for episode in episodes
+                    if episode["execution"] is not None
+                    and episode["execution"]["recovery"] is not None
+                    and episode["execution"]["recovery"][
+                        "final_joint_error_rad"
+                    ]
+                    is not None
+                ]
+            ),
+            "recovery_maximum_actual_joint_acceleration_rad_s2": distribution(
+                [
+                    float(
+                        episode["execution"]["recovery"][
+                            "maximum_actual_joint_acceleration_rad_s2"
+                        ]
+                    )
+                    for episode in episodes
+                    if episode["execution"] is not None
+                    and episode["execution"]["recovery"] is not None
+                    and episode["execution"]["recovery"][
+                        "maximum_actual_joint_acceleration_rad_s2"
+                    ]
+                    is not None
+                ]
+            ),
             "measured_net_clearance_m": distribution(
                 [
                     float(episode["execution"]["measured_return"]["net_clearance_m"])
@@ -254,10 +312,12 @@ def main() -> None:
         "development_gate": {
             "minimum_contact_fraction": 0.95,
             "minimum_legal_return_fraction": 0.95,
+            "minimum_recovery_fraction": 0.95,
             "require_zero_controller_safety_failures": True,
             "passed": (
                 contacted / args.count >= 0.95
                 and legal_returns / args.count >= 0.95
+                and recovered / args.count >= 0.95
                 and controller_safe == args.count
             ),
         },
@@ -272,7 +332,10 @@ def main() -> None:
                 "The first-order impact-model check is reported separately "
                 "from legal return."
             ),
-            "Execution stops after ball-racket separation and has no recovery motion.",
+            (
+                "Recovery uses privileged joint state and returns to one fixed "
+                "ready pose."
+            ),
             "Spin and calibrated string-bed response are not modeled.",
         ],
     }

@@ -16,6 +16,23 @@ from .intercept import InterceptCandidate, RacketIKConfig, find_kinematic_interc
 from .trajectory import SimulationJointMotionLimits
 
 
+DEFAULT_RECOVERY_DURATIONS_S = (
+    1.00,
+    1.25,
+    1.50,
+    1.75,
+    2.00,
+    2.25,
+    2.50,
+    2.75,
+    3.00,
+    3.25,
+    3.50,
+    3.75,
+    4.00,
+)
+
+
 @dataclass(frozen=True)
 class StrikeSearchConfig:
     """Discrete phase-one search over safe-center stroke templates."""
@@ -70,6 +87,8 @@ class StrikeSearchConfig:
     maximum_returned_plans: int = 8
     trajectory_safety_sample_period_s: float = 0.01
     post_contact_safety_horizon_s: float = 0.05
+    predicted_recovery_start_delay_s: float = 0.012
+    recovery_duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S
     preferred_motion_limit_utilization: float = 0.95
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
@@ -94,6 +113,12 @@ class StrikeSearchConfig:
             raise ValueError("trajectory safety sample period must be positive")
         if self.post_contact_safety_horizon_s < 0.0:
             raise ValueError("post-contact safety horizon cannot be negative")
+        if self.predicted_recovery_start_delay_s < 0.0:
+            raise ValueError("predicted recovery start delay cannot be negative")
+        if not self.recovery_duration_candidates_s or any(
+            duration <= 0.0 for duration in self.recovery_duration_candidates_s
+        ):
+            raise ValueError("recovery duration candidates must be positive")
         if not 0.0 < self.preferred_motion_limit_utilization <= 1.0:
             raise ValueError(
                 "preferred motion limit utilization must be in (0, 1]"
@@ -467,6 +492,52 @@ def trajectory_is_execution_safe(
     return True
 
 
+def plan_ready_recovery_trajectory(
+    model: mujoco.MjModel,
+    start_position_rad: np.ndarray,
+    start_velocity_rad_s: np.ndarray,
+    *,
+    duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S,
+    limits: SimulationJointMotionLimits | None = None,
+    sample_period_s: float = 0.01,
+) -> tuple[QuinticJointTrajectory, JointTrajectoryBounds] | None:
+    """Find the shortest bounded, collision-free path to the ready pose."""
+    if not duration_candidates_s or any(
+        duration <= 0.0 for duration in duration_candidates_s
+    ):
+        raise ValueError("recovery duration candidates must be positive")
+    limits = limits or SimulationJointMotionLimits()
+    limits.validate()
+    ready = tennis_ready_configuration(model)
+    zeros = np.zeros(7, dtype=np.float64)
+    for duration_s in duration_candidates_s:
+        trajectory = QuinticJointTrajectory.from_boundary_conditions(
+            start_position_rad,
+            ready,
+            duration_s=duration_s,
+            start_velocity_rad_s=start_velocity_rad_s,
+            target_velocity_rad_s=zeros,
+            start_acceleration_rad_s2=zeros,
+            target_acceleration_rad_s2=zeros,
+        )
+        bounds = trajectory.bounds(model)
+        if (
+            bounds.maximum_joint_speed_rad_s > limits.maximum_speed_rad_s
+            or bounds.maximum_joint_acceleration_rad_s2
+            > limits.maximum_acceleration_rad_s2
+            or bounds.minimum_joint_limit_margin_rad
+            < limits.minimum_joint_limit_margin_rad
+        ):
+            continue
+        if trajectory_is_execution_safe(
+            model,
+            trajectory,
+            sample_period_s=sample_period_s,
+        ):
+            return trajectory, bounds
+    return None
+
+
 def plan_safe_center_strikes(
     model: mujoco.MjModel,
     flight: BallFlightResult,
@@ -565,6 +636,24 @@ def plan_safe_center_strikes(
                                 search.post_contact_safety_horizon_s
                             ),
                         ):
+                            continue
+                        predicted_recovery_position = (
+                            candidate.solution.joint_positions_rad
+                            + contact_joint_velocity
+                            * search.predicted_recovery_start_delay_s
+                        )
+                        if plan_ready_recovery_trajectory(
+                            model,
+                            predicted_recovery_position,
+                            contact_joint_velocity,
+                            duration_candidates_s=(
+                                search.recovery_duration_candidates_s
+                            ),
+                            limits=limits,
+                            sample_period_s=(
+                                search.trajectory_safety_sample_period_s
+                            ),
+                        ) is None:
                             continue
                         racket_velocity = (
                             jacobian_position[:, :7] @ contact_joint_velocity

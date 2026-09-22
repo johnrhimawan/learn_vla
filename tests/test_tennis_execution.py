@@ -57,6 +57,13 @@ class TennisExecutionTests(unittest.TestCase):
         self.assertGreaterEqual(result.measured_return.net_clearance_m, 0.10)
         self.assertEqual(result.unexpected_contact_steps, 0)
         self.assertLessEqual(result.contact_position_error_m, 0.03)
+        self.assertIsNotNone(result.recovery)
+        self.assertTrue(result.recovery.passed, result.recovery.failure_reasons)
+        self.assertLessEqual(result.recovery.final_joint_error_rad, 0.01)
+        self.assertLessEqual(
+            result.recovery.maximum_actual_joint_acceleration_rad_s2,
+            15.0,
+        )
 
 
 if __name__ == "__main__":

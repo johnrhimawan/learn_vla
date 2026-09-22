@@ -11,7 +11,14 @@ import numpy as np
 from .arm import tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 from .court import TennisCourtSpec
-from .strike import StrikePlan
+from .strike import (
+    DEFAULT_RECOVERY_DURATIONS_S,
+    JointTrajectoryBounds,
+    QuinticJointTrajectory,
+    StrikePlan,
+    plan_ready_recovery_trajectory,
+)
+from .trajectory import SimulationJointMotionLimits
 
 
 @dataclass(frozen=True)
@@ -55,6 +62,10 @@ class StrikeExecutionConfig:
     minimum_actual_joint_limit_margin_rad: float = 0.020
     minimum_measured_return_net_clearance_m: float = 0.10
     maximum_outgoing_velocity_error_m_s: float = 2.00
+    recovery_duration_candidates_s: tuple[float, ...] = DEFAULT_RECOVERY_DURATIONS_S
+    minimum_planned_recovery_joint_limit_margin_rad: float = 0.020
+    maximum_recovery_joint_tracking_error_rad: float = 0.015
+    maximum_recovery_final_joint_error_rad: float = 0.010
 
     def validate(self, physics_timestep_s: float) -> None:
         positive = {
@@ -66,6 +77,10 @@ class StrikeExecutionConfig:
         }
         if any(value <= 0.0 for value in positive.values()):
             raise ValueError("controller rates, gains, and horizon must be positive")
+        if not self.recovery_duration_candidates_s or any(
+            duration <= 0.0 for duration in self.recovery_duration_candidates_s
+        ):
+            raise ValueError("recovery duration candidates must be positive")
         if any(
             value < 0.0
             for value in (
@@ -76,6 +91,9 @@ class StrikeExecutionConfig:
                 self.minimum_actual_joint_limit_margin_rad,
                 self.minimum_measured_return_net_clearance_m,
                 self.maximum_outgoing_velocity_error_m_s,
+                self.minimum_planned_recovery_joint_limit_margin_rad,
+                self.maximum_recovery_joint_tracking_error_rad,
+                self.maximum_recovery_final_joint_error_rad,
             )
         ):
             raise ValueError("execution acceptance bounds cannot be negative")
@@ -88,6 +106,32 @@ class StrikeExecutionConfig:
         rate_ratio = self.inner_control_rate_hz / self.reference_rate_hz
         if not np.isclose(rate_ratio, round(rate_ratio), atol=1e-12):
             raise ValueError("reference rate must divide the inner control rate")
+
+
+@dataclass(frozen=True)
+class StrikeRecoveryResult:
+    """Planned and measured return from ball separation to the ready pose."""
+
+    planned: bool
+    duration_s: float | None
+    planned_maximum_joint_speed_rad_s: float | None
+    planned_maximum_joint_acceleration_rad_s2: float | None
+    planned_minimum_joint_limit_margin_rad: float | None
+    maximum_joint_tracking_error_rad: float | None
+    final_joint_error_rad: float | None
+    maximum_actual_joint_speed_rad_s: float | None
+    maximum_actual_joint_acceleration_rad_s2: float | None
+    maximum_applied_torque_nm: float | None
+    minimum_actual_joint_limit_margin_rad: float | None
+    clipped_control_steps: int
+    unexpected_contact_steps: int
+    passed: bool
+    failure_reasons: tuple[str, ...]
+
+    def metrics(self) -> dict[str, Any]:
+        result = asdict(self)
+        result["failure_reasons"] = list(self.failure_reasons)
+        return result
 
 
 @dataclass(frozen=True)
@@ -118,6 +162,7 @@ class StrikeExecutionResult:
     clipped_control_steps: int
     unexpected_contact_steps: int
     measured_return: BallFlightResult | None
+    recovery: StrikeRecoveryResult | None
     passed: bool
     failure_reasons: tuple[str, ...]
 
@@ -173,6 +218,7 @@ class StrikeExecutionResult:
             "measured_return": (
                 None if self.measured_return is None else self.measured_return.metrics()
             ),
+            "recovery": None if self.recovery is None else self.recovery.metrics(),
             "passed": self.passed,
             "failure_reasons": list(self.failure_reasons),
         }
@@ -473,6 +519,219 @@ def _racket_linear_velocity(
     return jacobian @ data.qvel
 
 
+def _interpolated_trajectory_reference(
+    trajectory: QuinticJointTrajectory,
+    elapsed_s: float,
+    period_s: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Interpolate a joint trajectory between adjacent servo references."""
+    lower_time = min(
+        np.floor(elapsed_s / period_s) * period_s,
+        trajectory.duration_s,
+    )
+    upper_time = min(lower_time + period_s, trajectory.duration_s)
+    if upper_time <= lower_time:
+        return trajectory.sample(trajectory.duration_s)
+    fraction = (elapsed_s - lower_time) / (upper_time - lower_time)
+    lower = trajectory.sample(float(lower_time))
+    upper = trajectory.sample(float(upper_time))
+    return tuple(
+        (1.0 - fraction) * lower[index] + fraction * upper[index]
+        for index in range(3)
+    )
+
+
+def _plan_recovery_trajectory(
+    model: mujoco.MjModel,
+    start_position_rad: np.ndarray,
+    start_velocity_rad_s: np.ndarray,
+    config: StrikeExecutionConfig,
+) -> tuple[QuinticJointTrajectory, JointTrajectoryBounds] | None:
+    """Find the shortest screened path from the measured state to ready."""
+    return plan_ready_recovery_trajectory(
+        model,
+        start_position_rad,
+        start_velocity_rad_s,
+        duration_candidates_s=config.recovery_duration_candidates_s,
+        limits=SimulationJointMotionLimits(
+            maximum_speed_rad_s=config.maximum_actual_joint_speed_rad_s,
+            maximum_acceleration_rad_s2=(
+                config.maximum_actual_joint_acceleration_rad_s2
+            ),
+            minimum_joint_limit_margin_rad=(
+                config.minimum_planned_recovery_joint_limit_margin_rad
+            ),
+        ),
+    )
+
+
+def _execute_recovery(
+    model: mujoco.MjModel,
+    data: mujoco.MjData,
+    inverse_data: mujoco.MjData,
+    *,
+    config: StrikeExecutionConfig,
+    flight_config: BallFlightConfig,
+) -> StrikeRecoveryResult:
+    """Plan and execute a bounded recovery on the live post-strike state."""
+    planned = _plan_recovery_trajectory(
+        model,
+        data.qpos[:7].copy(),
+        data.qvel[:7].copy(),
+        config,
+    )
+    if planned is None:
+        return StrikeRecoveryResult(
+            planned=False,
+            duration_s=None,
+            planned_maximum_joint_speed_rad_s=None,
+            planned_maximum_joint_acceleration_rad_s2=None,
+            planned_minimum_joint_limit_margin_rad=None,
+            maximum_joint_tracking_error_rad=None,
+            final_joint_error_rad=None,
+            maximum_actual_joint_speed_rad_s=None,
+            maximum_actual_joint_acceleration_rad_s2=None,
+            maximum_applied_torque_nm=None,
+            minimum_actual_joint_limit_margin_rad=None,
+            clipped_control_steps=0,
+            unexpected_contact_steps=0,
+            passed=False,
+            failure_reasons=("no_feasible_plan",),
+        )
+
+    trajectory, bounds = planned
+    physics_dt = float(model.opt.timestep)
+    reference_period = 1.0 / config.reference_rate_hz
+    actuator_gain = model.actuator_gainprm[:7, 0]
+    actuator_damping = -model.actuator_biasprm[:7, 2]
+    control_lower = model.actuator_ctrlrange[:7, 0]
+    control_upper = model.actuator_ctrlrange[:7, 1]
+    joint_lower = model.jnt_range[:7, 0]
+    joint_upper = model.jnt_range[:7, 1]
+    inverse_torque_all = np.zeros(model.nv, dtype=np.float64)
+    ball_geom = model.geom("tennis_ball_geom").id
+    court_geom = model.geom("tennis_court").id
+    net_geom = model.geom("tennis_net").id
+    allowed_pairs = ({ball_geom, court_geom}, {ball_geom, net_geom})
+
+    maximum_tracking_error = 0.0
+    maximum_speed = 0.0
+    maximum_acceleration = 0.0
+    maximum_torque = 0.0
+    minimum_margin = float("inf")
+    clipped_steps = 0
+    unexpected_contact_steps = 0
+    maximum_steps = int(np.ceil(trajectory.duration_s / physics_dt))
+
+    for step in range(maximum_steps):
+        elapsed_s = min(step * physics_dt, trajectory.duration_s)
+        desired_position, desired_velocity, desired_acceleration = (
+            _interpolated_trajectory_reference(
+                trajectory,
+                elapsed_s,
+                reference_period,
+            )
+        )
+        inverse_data.qpos[:7] = desired_position
+        inverse_data.qvel[:7] = desired_velocity
+        mujoco.mj_forward(model, inverse_data)
+        inverse_data.qacc[:] = 0.0
+        inverse_data.qacc[:7] = desired_acceleration
+        mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
+        applied_torque = (
+            inverse_torque_all[:7]
+            - inverse_data.qfrc_passive[:7]
+            + config.position_feedback_nm_rad
+            * (desired_position - data.qpos[:7])
+            + config.velocity_feedback_nm_s_rad
+            * (desired_velocity - data.qvel[:7])
+        )
+        position_command = desired_position + (
+            actuator_damping * desired_velocity / actuator_gain
+        )
+        clipped_command = np.clip(position_command, control_lower, control_upper)
+        if not np.array_equal(clipped_command, position_command):
+            clipped_steps += 1
+        data.ctrl[:7] = clipped_command
+        data.qfrc_applied[:] = 0.0
+        data.qfrc_applied[:7] = applied_torque
+        apply_ball_drag(model, data, flight_config)
+        mujoco.mj_step(model, data)
+
+        expected_position, _, _ = _interpolated_trajectory_reference(
+            trajectory,
+            min((step + 1) * physics_dt, trajectory.duration_s),
+            reference_period,
+        )
+        maximum_tracking_error = max(
+            maximum_tracking_error,
+            float(np.max(np.abs(data.qpos[:7] - expected_position))),
+        )
+        maximum_speed = max(maximum_speed, float(np.max(np.abs(data.qvel[:7]))))
+        maximum_acceleration = max(
+            maximum_acceleration,
+            float(np.max(np.abs(data.qacc[:7]))),
+        )
+        maximum_torque = max(maximum_torque, float(np.max(np.abs(applied_torque))))
+        minimum_margin = min(
+            minimum_margin,
+            float(
+                np.min(
+                    np.minimum(
+                        data.qpos[:7] - joint_lower,
+                        joint_upper - data.qpos[:7],
+                    )
+                )
+            ),
+        )
+        if any(
+            {data.contact[index].geom1, data.contact[index].geom2}
+            not in allowed_pairs
+            for index in range(data.ncon)
+        ):
+            unexpected_contact_steps += 1
+
+    final_error = float(
+        np.max(np.abs(data.qpos[:7] - tennis_ready_configuration(model)))
+    )
+    failures = []
+    if maximum_tracking_error > config.maximum_recovery_joint_tracking_error_rad:
+        failures.append("joint_tracking")
+    if final_error > config.maximum_recovery_final_joint_error_rad:
+        failures.append("final_joint_error")
+    if maximum_speed > config.maximum_actual_joint_speed_rad_s:
+        failures.append("actual_joint_speed")
+    if maximum_acceleration > config.maximum_actual_joint_acceleration_rad_s2:
+        failures.append("actual_joint_acceleration")
+    if minimum_margin < config.minimum_actual_joint_limit_margin_rad:
+        failures.append("joint_limit_margin")
+    if clipped_steps:
+        failures.append("clipped_control")
+    if unexpected_contact_steps:
+        failures.append("unexpected_contact")
+    return StrikeRecoveryResult(
+        planned=True,
+        duration_s=trajectory.duration_s,
+        planned_maximum_joint_speed_rad_s=bounds.maximum_joint_speed_rad_s,
+        planned_maximum_joint_acceleration_rad_s2=(
+            bounds.maximum_joint_acceleration_rad_s2
+        ),
+        planned_minimum_joint_limit_margin_rad=(
+            bounds.minimum_joint_limit_margin_rad
+        ),
+        maximum_joint_tracking_error_rad=maximum_tracking_error,
+        final_joint_error_rad=final_error,
+        maximum_actual_joint_speed_rad_s=maximum_speed,
+        maximum_actual_joint_acceleration_rad_s2=maximum_acceleration,
+        maximum_applied_torque_nm=maximum_torque,
+        minimum_actual_joint_limit_margin_rad=minimum_margin,
+        clipped_control_steps=clipped_steps,
+        unexpected_contact_steps=unexpected_contact_steps,
+        passed=not failures,
+        failure_reasons=tuple(failures),
+    )
+
+
 def execute_strike(
     model: mujoco.MjModel,
     plan: StrikePlan,
@@ -482,12 +741,12 @@ def execute_strike(
     config: StrikeExecutionConfig | None = None,
     flight_config: BallFlightConfig | None = None,
 ) -> StrikeExecutionResult:
-    """Track one planned strike through MuJoCo ball-racket separation.
+    """Track one planned strike through contact and a bounded recovery.
 
     The trajectory generator emits 250 Hz references.  A 1 kHz inner loop
     interpolates them and applies rigid-body inverse dynamics plus feedback.
-    The short post-contact continuation is only long enough to measure ball
-    separation; a recovery or follow-through plan remains a later milestone.
+    After measuring ball separation, a separately screened trajectory returns
+    the arm from its measured joint state to the ready pose.
     """
     config = config or StrikeExecutionConfig()
     flight_config = flight_config or BallFlightConfig()
@@ -694,6 +953,17 @@ def execute_strike(
             ),
         )
     )
+    recovery = (
+        None
+        if separation_time is None
+        else _execute_recovery(
+            model,
+            data,
+            inverse_data,
+            config=config,
+            flight_config=flight_config,
+        )
+    )
 
     failures = []
     if actual_contact_time is None:
@@ -745,6 +1015,10 @@ def execute_strike(
             < config.minimum_measured_return_net_clearance_m
         ):
             failures.append("measured_return_net_clearance")
+    if recovery is not None and not recovery.passed:
+        failures.extend(
+            f"recovery_{reason}" for reason in recovery.failure_reasons
+        )
 
     return StrikeExecutionResult(
         contacted=actual_contact_time is not None,
@@ -775,6 +1049,7 @@ def execute_strike(
         clipped_control_steps=clipped_steps,
         unexpected_contact_steps=unexpected_contact_steps,
         measured_return=measured_return,
+        recovery=recovery,
         passed=not failures,
         failure_reasons=tuple(failures),
     )
