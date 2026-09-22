@@ -96,7 +96,7 @@ class StrikeSearchConfig:
     preferred_motion_limit_utilization: float = 0.95
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
-    fixed_wrist_roll_velocity_rad_s: float = 0.0
+    fixed_wrist_roll_velocity_rad_s: float | None = 0.0
 
     def validate(self) -> None:
         if not self.face_pitch_degrees:
@@ -633,9 +633,13 @@ def plan_safe_center_strikes(
                         unit_joint_velocity = minimum_infinity_joint_velocity(
                             jacobian_position[:, :7],
                             unit_racket_velocity,
-                            fixed_joint_velocities={
-                                6: search.fixed_wrist_roll_velocity_rad_s
-                            },
+                            fixed_joint_velocities=(
+                                None
+                                if search.fixed_wrist_roll_velocity_rad_s is None
+                                else {
+                                    6: search.fixed_wrist_roll_velocity_rad_s
+                                }
+                            ),
                         )
                     except ValueError:
                         continue
