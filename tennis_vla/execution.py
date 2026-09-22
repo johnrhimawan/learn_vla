@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 import mujoco
@@ -10,6 +10,7 @@ import numpy as np
 
 from .arm import tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
+from .court import TennisCourtSpec
 from .strike import StrikePlan
 
 
@@ -204,6 +205,143 @@ def apply_ball_drag(
     )
     data.qfrc_applied[dof_address : dof_address + 3] = (
         -drag_scale * np.linalg.norm(velocity) * velocity
+    )
+
+
+def simulate_mujoco_ball_flight(
+    model: mujoco.MjModel,
+    position_m: np.ndarray,
+    velocity_m_s: np.ndarray,
+    *,
+    config: BallFlightConfig | None = None,
+) -> BallFlightResult:
+    """Roll out the calibrated MuJoCo ball with robot collisions isolated.
+
+    Collision masks are restored before return, so the same model can then be
+    used for strike planning and execution.  This privileged M2 predictor uses
+    the simulator's compliant court bounce instead of treating the independent
+    analytical flight model as exact after impact with the court.
+    """
+    config = config or BallFlightConfig()
+    if not np.isclose(model.opt.timestep, config.dt_s, atol=1e-12):
+        raise ValueError("flight configuration timestep must match MuJoCo")
+    court = TennisCourtSpec()
+    data = mujoco.MjData(model)
+    qpos_address, dof_address = _ball_addresses(model)
+    ready = tennis_ready_configuration(model)
+    data.qpos[:7] = ready
+    data.ctrl[:7] = ready
+    initial_position = np.asarray(position_m, dtype=np.float64).reshape(3)
+    initial_velocity = np.asarray(velocity_m_s, dtype=np.float64).reshape(3)
+    data.qpos[qpos_address : qpos_address + 7] = [
+        *initial_position,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+    ]
+    data.qvel[dof_address : dof_address + 3] = initial_velocity
+
+    ball_geom = model.geom("tennis_ball_geom").id
+    court_geom = model.geom("tennis_court").id
+    net_geom = model.geom("tennis_net").id
+    collision_geoms = {ball_geom, court_geom, net_geom}
+    saved_contype = model.geom_contype.copy()
+    saved_conaffinity = model.geom_conaffinity.copy()
+    saved_pair_signature = model.pair_signature.copy()
+    for geom_id in range(model.ngeom):
+        if geom_id not in collision_geoms:
+            model.geom_contype[geom_id] = 0
+            model.geom_conaffinity[geom_id] = 0
+    for pair_id in range(model.npair):
+        if model.pair(pair_id).name == "ball_racket_contact":
+            model.pair_signature[pair_id] = -1
+
+    steps = int(round(config.duration_s / config.dt_s))
+    times = np.arange(steps + 1, dtype=np.float64) * config.dt_s
+    positions = np.empty((steps + 1, 3), dtype=np.float64)
+    velocities = np.empty((steps + 1, 3), dtype=np.float64)
+    positions[0] = initial_position
+    velocities[0] = initial_velocity
+    hit_net = False
+    try:
+        mujoco.mj_forward(model, data)
+        for step in range(1, steps + 1):
+            apply_ball_drag(model, data, config)
+            mujoco.mj_step(model, data)
+            positions[step] = data.qpos[
+                qpos_address : qpos_address + 3
+            ]
+            velocities[step] = data.qvel[
+                dof_address : dof_address + 3
+            ]
+            hit_net = hit_net or _geoms_touching(data, ball_geom, net_geom)
+    finally:
+        model.geom_contype[:] = saved_contype
+        model.geom_conaffinity[:] = saved_conaffinity
+        model.pair_signature[:] = saved_pair_signature
+
+    crossing_indices = np.flatnonzero(
+        positions[:-1, 0] * positions[1:, 0] <= 0.0
+    )
+    net_crossing: np.ndarray | None = None
+    net_clearance: float | None = None
+    if len(crossing_indices):
+        index = int(crossing_indices[0])
+        delta_x = positions[index + 1, 0] - positions[index, 0]
+        fraction = (
+            0.0
+            if abs(delta_x) < 1e-12
+            else -positions[index, 0] / delta_x
+        )
+        net_crossing = positions[index] + fraction * (
+            positions[index + 1] - positions[index]
+        )
+        if abs(net_crossing[1]) <= court.doubles_half_width_m:
+            net_clearance = float(
+                net_crossing[2]
+                - config.radius_m
+                - court.net_height_m(float(net_crossing[1]))
+            )
+
+    bounce_indices = np.flatnonzero(
+        (velocities[:-1, 2] < 0.0)
+        & (velocities[1:, 2] > 0.0)
+        & (positions[1:, 2] < 0.10)
+    )
+    first_bounce = (
+        None
+        if not len(bounce_indices)
+        else positions[int(bounce_indices[0] + 1)].copy()
+    )
+    initial_side = 1.0 if initial_position[0] >= 0.0 else -1.0
+    legal_first_bounce = bool(
+        not hit_net
+        and first_bounce is not None
+        and first_bounce[0] * initial_side <= 0.0
+        and court.contains_singles_bounce(first_bounce, config.radius_m)
+    )
+    if hit_net:
+        outcome = "hit_net"
+    elif first_bounce is None:
+        outcome = "airborne"
+    elif first_bounce[0] * initial_side > 0.0:
+        outcome = "same_side_bounce"
+    elif legal_first_bounce:
+        outcome = "legal_first_bounce"
+    else:
+        outcome = "out"
+    return BallFlightResult(
+        times_s=times,
+        positions_m=positions,
+        velocities_m_s=velocities,
+        net_crossing_m=net_crossing,
+        first_bounce_m=first_bounce,
+        bounce_count=int(len(bounce_indices)),
+        hit_net=hit_net,
+        net_clearance_m=net_clearance,
+        legal_first_bounce=legal_first_bounce,
+        outcome=outcome,
     )
 
 
@@ -550,7 +688,10 @@ def execute_strike(
         else simulate_ball_flight(
             outgoing_ball_position,
             outgoing_ball_velocity,
-            flight_config,
+            replace(
+                flight_config,
+                duration_s=max(4.0, flight_config.duration_s),
+            ),
         )
     )
 

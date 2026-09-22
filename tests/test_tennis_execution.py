@@ -4,9 +4,12 @@ import unittest
 
 import numpy as np
 
-from tennis_vla.ballistics import simulate_ball_flight
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import audit_court_bounce, execute_strike
+from tennis_vla.execution import (
+    audit_court_bounce,
+    execute_strike,
+    simulate_mujoco_ball_flight,
+)
 from tennis_vla.strike import plan_safe_center_strikes
 
 
@@ -18,7 +21,8 @@ class TennisExecutionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.model = make_tennis_contact_model()
-        cls.flight = simulate_ball_flight(
+        cls.flight = simulate_mujoco_ball_flight(
+            cls.model,
             CANONICAL_POSITION_M,
             CANONICAL_VELOCITY_M_S,
         )
@@ -52,6 +56,7 @@ class TennisExecutionTests(unittest.TestCase):
         self.assertTrue(result.measured_return.legal_first_bounce)
         self.assertGreaterEqual(result.measured_return.net_clearance_m, 0.10)
         self.assertEqual(result.unexpected_contact_steps, 0)
+        self.assertLessEqual(result.contact_position_error_m, 0.03)
 
 
 if __name__ == "__main__":

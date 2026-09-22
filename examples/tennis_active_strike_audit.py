@@ -16,7 +16,11 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import StrikeExecutionConfig, execute_strike
+from tennis_vla.execution import (
+    StrikeExecutionConfig,
+    execute_strike,
+    simulate_mujoco_ball_flight,
+)
 from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
 from tennis_vla.strike import plan_safe_center_strikes
 
@@ -67,9 +71,14 @@ def distribution(values: list[float]) -> dict[str, float] | None:
 
 def audit_seed(seed: int) -> dict[str, Any]:
     model = make_tennis_contact_model()
-    feed, flight = ProgrammableFeeder(
+    feed, analytical_flight = ProgrammableFeeder(
         PHASE_ONE_CONTACT_ENVELOPE
     ).sample_legal_feed(seed)
+    flight = simulate_mujoco_ball_flight(
+        model,
+        feed.position_m,
+        feed.velocity_m_s,
+    )
     plans = plan_safe_center_strikes(model, flight, seed=40_000 + seed)
     result: dict[str, Any] = {
         "seed": seed,
@@ -77,6 +86,10 @@ def audit_seed(seed: int) -> dict[str, Any]:
             "attempt": feed.attempt,
             "position_m": feed.position_m.tolist(),
             "velocity_m_s": feed.velocity_m_s.tolist(),
+            "analytical_first_bounce_m": (
+                analytical_flight.first_bounce_m.tolist()
+            ),
+            "mujoco_first_bounce_m": flight.first_bounce_m.tolist(),
         },
         "planned": bool(plans),
         "feasible_plan_count": len(plans),
@@ -84,7 +97,7 @@ def audit_seed(seed: int) -> dict[str, Any]:
         "execution": None,
         "contacted": False,
         "legal_return": False,
-        "controller_safe": False,
+        "controller_safe": True,
         "strict_pass": False,
     }
     if not plans:
@@ -251,7 +264,10 @@ def main() -> None:
         "episodes": episodes,
         "limitations": [
             "This development prefix is smaller than the 200-feed held-out gate.",
-            "Planning and control use exact simulator ball state and inverse dynamics.",
+            (
+                "Planning and control use exact MuJoCo ball state and inverse "
+                "dynamics."
+            ),
             (
                 "The first-order impact-model check is reported separately "
                 "from legal return."

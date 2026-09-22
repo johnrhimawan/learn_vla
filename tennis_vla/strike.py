@@ -69,6 +69,7 @@ class StrikeSearchConfig:
     planning_ball_timestep_s: float = 0.005
     maximum_returned_plans: int = 8
     trajectory_safety_sample_period_s: float = 0.01
+    preferred_motion_limit_utilization: float = 0.95
     landing_target_xy_m: tuple[float, float] = (4.0, 0.0)
     minimum_net_clearance_m: float = 0.10
     fixed_wrist_roll_velocity_rad_s: float = 0.0
@@ -90,6 +91,10 @@ class StrikeSearchConfig:
             raise ValueError("maximum_returned_plans must be at least one")
         if self.trajectory_safety_sample_period_s <= 0.0:
             raise ValueError("trajectory safety sample period must be positive")
+        if not 0.0 < self.preferred_motion_limit_utilization <= 1.0:
+            raise ValueError(
+                "preferred motion limit utilization must be in (0, 1]"
+            )
         if self.minimum_net_clearance_m < 0.0:
             raise ValueError("minimum_net_clearance_m cannot be negative")
 
@@ -639,8 +644,20 @@ def plan_safe_center_strikes(
     return sorted(
         plans,
         key=lambda plan: (
+            max(
+                plan.trajectory_bounds.maximum_joint_speed_rad_s
+                / limits.maximum_speed_rad_s,
+                plan.trajectory_bounds.maximum_joint_acceleration_rad_s2
+                / limits.maximum_acceleration_rad_s2,
+            )
+            > search.preferred_motion_limit_utilization,
             plan.landing_error_m,
+            max(
+                plan.trajectory_bounds.maximum_joint_speed_rad_s
+                / limits.maximum_speed_rad_s,
+                plan.trajectory_bounds.maximum_joint_acceleration_rad_s2
+                / limits.maximum_acceleration_rad_s2,
+            ),
             -float(plan.predicted_return.net_clearance_m or 0.0),
-            plan.trajectory_bounds.maximum_joint_speed_rad_s,
         ),
     )
