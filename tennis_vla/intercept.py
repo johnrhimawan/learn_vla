@@ -352,12 +352,21 @@ def find_kinematic_intercepts(
     sample_period_s: float = 0.02,
     maximum_candidates: int = 8,
     solutions_per_pose: int = 1,
+    contact_x_bounds_m: tuple[float, float] = (-10.1, -9.45),
+    maximum_abs_contact_y_m: float = 1.1,
+    contact_z_bounds_m: tuple[float, float] = (0.60, 1.35),
     ik_config: RacketIKConfig | None = None,
     seed: int = 2026,
 ) -> list[InterceptCandidate]:
     """Find post-bounce samples that admit a kinematic racket contact pose."""
     if solutions_per_pose < 1:
         raise ValueError("solutions_per_pose must be at least one")
+    if contact_x_bounds_m[0] >= contact_x_bounds_m[1]:
+        raise ValueError("contact x bounds must be increasing")
+    if contact_z_bounds_m[0] >= contact_z_bounds_m[1]:
+        raise ValueError("contact z bounds must be increasing")
+    if maximum_abs_contact_y_m <= 0.0:
+        raise ValueError("maximum absolute contact y must be positive")
     ball = BallFlightConfig()
     bounce_time = _first_bounce_time(flight, ball.radius_m)
     first_index = int(np.searchsorted(flight.times_s, bounce_time))
@@ -373,9 +382,13 @@ def find_kinematic_intercepts(
     for index in range(first_index, len(flight.times_s), stride):
         ball_position = flight.positions_m[index]
         if not (
-            -10.1 <= ball_position[0] <= -9.45
-            and abs(ball_position[1]) <= 1.1
-            and 0.60 <= ball_position[2] <= 1.35
+            contact_x_bounds_m[0]
+            <= ball_position[0]
+            <= contact_x_bounds_m[1]
+            and abs(ball_position[1]) <= maximum_abs_contact_y_m
+            and contact_z_bounds_m[0]
+            <= ball_position[2]
+            <= contact_z_bounds_m[1]
         ):
             continue
         racket_target = ball_position - contact_offset_m * normal

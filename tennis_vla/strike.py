@@ -85,6 +85,9 @@ class StrikeSearchConfig:
     alternative_ik_solutions: int = 4
     planning_ball_timestep_s: float = 0.005
     maximum_returned_plans: int = 8
+    contact_x_bounds_m: tuple[float, float] = (-10.1, -9.45)
+    maximum_abs_contact_y_m: float = 1.1
+    contact_z_bounds_m: tuple[float, float] = (0.60, 1.35)
     trajectory_safety_sample_period_s: float = 0.01
     post_contact_safety_horizon_s: float = 0.05
     predicted_recovery_start_delay_s: float = 0.012
@@ -110,6 +113,12 @@ class StrikeSearchConfig:
             raise ValueError("planning_ball_timestep_s must be positive")
         if self.maximum_returned_plans < 1:
             raise ValueError("maximum_returned_plans must be at least one")
+        if self.contact_x_bounds_m[0] >= self.contact_x_bounds_m[1]:
+            raise ValueError("contact x bounds must be increasing")
+        if self.maximum_abs_contact_y_m <= 0.0:
+            raise ValueError("maximum absolute contact y must be positive")
+        if self.contact_z_bounds_m[0] >= self.contact_z_bounds_m[1]:
+            raise ValueError("contact z bounds must be increasing")
         if self.trajectory_safety_sample_period_s <= 0.0:
             raise ValueError("trajectory safety sample period must be positive")
         if self.post_contact_safety_horizon_s < 0.0:
@@ -596,6 +605,9 @@ def plan_safe_center_strikes(
                 racket_normal=target_normal,
                 maximum_candidates=8 * solutions_per_pose,
                 solutions_per_pose=solutions_per_pose,
+                contact_x_bounds_m=search.contact_x_bounds_m,
+                maximum_abs_contact_y_m=search.maximum_abs_contact_y_m,
+                contact_z_bounds_m=search.contact_z_bounds_m,
                 ik_config=ik_config,
                 seed=seed,
             )
