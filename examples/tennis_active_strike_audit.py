@@ -160,17 +160,36 @@ def audit_seed(seed: int) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--seed-start", type=int, default=9000)
-    parser.add_argument("--count", type=int, default=20)
-    parser.add_argument("--workers", type=int, default=4)
     parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("results/tennis/active_strike_development_v1.json"),
+        "--split",
+        choices=("development", "final-heldout"),
+        default="development",
     )
+    parser.add_argument("--seed-start", type=int)
+    parser.add_argument("--count", type=int)
+    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    final_heldout = args.split == "final-heldout"
+    if args.seed_start is None:
+        args.seed_start = 12_000 if final_heldout else 9_000
+    if args.count is None:
+        args.count = 200 if final_heldout else 20
+    if args.output is None:
+        args.output = Path(
+            "results/tennis/active_strike_heldout_v0.json"
+            if final_heldout
+            else "results/tennis/active_strike_development_v1.json"
+        )
     if args.count < 1 or args.workers < 1:
         raise SystemExit("count and workers must be positive")
+    audit_name = (
+        "phase-one-active-strike-heldout-v0"
+        if final_heldout
+        else "phase-one-active-strike-development-v1"
+    )
+    split_name = "final-heldout" if final_heldout else "test-development-prefix"
+    gate_name = "heldout_gate" if final_heldout else "development_gate"
 
     source = repository_state()
     seeds = range(args.seed_start, args.seed_start + args.count)
@@ -217,10 +236,10 @@ def main() -> None:
 
     report = {
         "schema_version": 2,
-        "audit": "phase-one-active-strike-development-v1",
+        "audit": audit_name,
         "source": source,
         "split": {
-            "name": "test-development-prefix",
+            "name": split_name,
             "seed_start": args.seed_start,
             "feeds": args.count,
             "workers": args.workers,
@@ -309,7 +328,7 @@ def main() -> None:
                 ]
             ),
         },
-        "development_gate": {
+        gate_name: {
             "minimum_contact_fraction": 0.95,
             "minimum_legal_return_fraction": 0.95,
             "minimum_recovery_fraction": 0.95,
@@ -323,7 +342,14 @@ def main() -> None:
         },
         "episodes": episodes,
         "limitations": [
-            "This development prefix is smaller than the 200-feed held-out gate.",
+            (
+                "This is the reserved 200-feed final simulation split."
+                if final_heldout
+                else (
+                    "This development prefix is smaller than the 200-feed "
+                    "held-out gate."
+                )
+            ),
             (
                 "Planning and control use exact MuJoCo ball state and inverse "
                 "dynamics."
@@ -345,7 +371,7 @@ def main() -> None:
         json.dumps(
             {
                 "summary": report["summary"],
-                "gate": report["development_gate"],
+                "gate": report[gate_name],
             },
             indent=2,
         )
