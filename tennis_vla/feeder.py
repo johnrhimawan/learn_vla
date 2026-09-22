@@ -27,6 +27,16 @@ class FeedEnvelope:
     vertical_speed_m_s: tuple[float, float] = (3.5, 5.5)
 
 
+PHASE_ONE_CONTACT_ENVELOPE = FeedEnvelope(
+    source_x_m=(9.5, 11.0),
+    source_y_m=(-0.5, 0.5),
+    source_z_m=(1.2, 1.6),
+    forward_speed_m_s=(14.0, 18.0),
+    lateral_speed_m_s=(-0.5, 0.5),
+    vertical_speed_m_s=(4.0, 5.0),
+)
+
+
 class ProgrammableFeeder:
     def __init__(
         self,

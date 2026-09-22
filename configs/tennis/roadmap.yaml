@@ -62,7 +62,7 @@ milestones:
       racket_pose_inverse_kinematics: complete
       privileged_kinematic_intercept_search: complete
       broad_feeder_kinematic_audit: complete
-      reachable_feed_curriculum: planned
+      reachable_feed_curriculum: complete
       dynamically_feasible_swing_trajectory: planned
       closed_loop_contact_execution: planned
       tennis_strike_oracle_dataset: planned

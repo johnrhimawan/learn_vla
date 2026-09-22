@@ -151,6 +151,12 @@ and z=0.20 to 1.31 m. The result is recorded in
 `results/tennis/intercept_kinematic_audit_v0.json`. This 52% ceiling is evidence
 for a restricted M2 feeder curriculum; it is not a contact-rate result.
 
+The phase-one contact curriculum narrows source lateral position to +/-0.5 m,
+lateral velocity to +/-0.5 m/s, launch height to 1.2-1.6 m, forward speed to
+14-18 m/s, and vertical speed to 4-5 m/s. It leaves the broader perception
+distribution unchanged. Separate train, validation, and test seed ranges must
+each exceed 95% kinematic eligibility before dynamic swing work uses them.
+
 ### M3 — Behavior-cloned visual returns
 
 Generate oracle trajectories across feed position, speed, bounce, camera,

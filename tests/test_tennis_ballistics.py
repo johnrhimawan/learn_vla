@@ -6,7 +6,7 @@ import numpy as np
 
 from tennis_vla.ballistics import BallFlightConfig, simulate_ball_flight
 from tennis_vla.court import TennisCourtSpec
-from tennis_vla.feeder import ProgrammableFeeder
+from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
 from tennis_vla.impact import apply_racket_impact
 
 
@@ -98,6 +98,18 @@ class BallFlightTests(unittest.TestCase):
         second = simulate_ball_flight(*inputs)
         np.testing.assert_array_equal(first.positions_m, second.positions_m)
         np.testing.assert_array_equal(first.velocities_m_s, second.velocities_m_s)
+
+    def test_contact_curriculum_is_narrower_than_perception_feeder(self) -> None:
+        default = ProgrammableFeeder().envelope
+        contact = PHASE_ONE_CONTACT_ENVELOPE
+        self.assertLess(contact.source_y_m[1], default.source_y_m[1])
+        self.assertGreater(contact.source_y_m[0], default.source_y_m[0])
+        self.assertLess(
+            contact.lateral_speed_m_s[1], default.lateral_speed_m_s[1]
+        )
+        for seed in range(10):
+            _, result = ProgrammableFeeder(contact).sample_legal_feed(seed)
+            self.assertTrue(result.legal_first_bounce)
 
 
 if __name__ == "__main__":

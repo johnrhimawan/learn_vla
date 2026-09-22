@@ -323,6 +323,7 @@ audit the broad feeder envelope:
 ```bash
 scripts/run python examples/tennis_intercept_oracle.py --seed 1
 scripts/run python examples/tennis_intercept_audit.py
+scripts/run python examples/tennis_contact_curriculum_audit.py
 ```
 
 The perception plane at x=-9.25 m is an advance timing reference. It is outside
