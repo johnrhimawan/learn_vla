@@ -108,6 +108,32 @@ def camera_ray(
     return data.cam_xpos[camera_id].copy(), world_direction
 
 
+def camera_ray_from_calibration(
+    calibration: dict[str, Any],
+    pixel_xy: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Convert a pixel to a ray using an exported dataset calibration."""
+    focal_x, focal_y = np.asarray(calibration["focal_length_px"], dtype=np.float64)
+    center_x, center_y = np.asarray(
+        calibration["principal_point_px"], dtype=np.float64
+    )
+    pixel = np.asarray(pixel_xy, dtype=np.float64).reshape(2)
+    camera_direction = np.array(
+        [
+            (pixel[0] - center_x) / focal_x,
+            -((pixel[1] - center_y) / focal_y),
+            -1.0,
+        ]
+    )
+    rotation = np.asarray(
+        calibration["camera_to_world_rotation"], dtype=np.float64
+    ).reshape(3, 3)
+    world_direction = rotation @ camera_direction
+    world_direction /= np.linalg.norm(world_direction)
+    origin = np.asarray(calibration["camera_origin_world_m"], dtype=np.float64)
+    return origin, world_direction
+
+
 def triangulate_rays(
     origin1: np.ndarray,
     direction1: np.ndarray,

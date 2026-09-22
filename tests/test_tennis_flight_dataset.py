@@ -19,7 +19,12 @@ from tennis_vla.flight_dataset import (
     generate_flight_dataset,
     validate_flight_dataset,
 )
-from tennis_vla.perception import camera_calibration, camera_ray
+from tennis_vla.perception import (
+    camera_calibration,
+    camera_ray,
+    camera_ray_from_calibration,
+)
+from tennis_vla.perception_evaluation import evaluate_color_stereo_baseline
 
 
 class TennisFlightDatasetTests(unittest.TestCase):
@@ -60,6 +65,11 @@ class TennisFlightDatasetTests(unittest.TestCase):
             )
             np.testing.assert_allclose(origin, expected.position_m)
             np.testing.assert_allclose(principal_ray, forward, atol=1e-12)
+            exported_origin, exported_ray = camera_ray_from_calibration(
+                calibration, np.asarray(calibration["principal_point_px"])
+            )
+            np.testing.assert_allclose(exported_origin, origin)
+            np.testing.assert_allclose(exported_ray, principal_ray)
 
     def test_integrated_scene_has_visual_regulation_lines(self) -> None:
         model = make_tennis_contact_model()
@@ -101,6 +111,11 @@ class TennisFlightDatasetTests(unittest.TestCase):
                 with Image.open(root / relative_path) as image:
                     self.assertEqual(image.size, (128, 96))
                     self.assertEqual(image.mode, "RGB")
+
+            baseline = evaluate_color_stereo_baseline(root)
+            self.assertEqual(baseline["metrics"]["frames"], report["frames"])
+            self.assertGreaterEqual(baseline["metrics"]["detection_rate"], 0.0)
+            self.assertLessEqual(baseline["metrics"]["detection_rate"], 1.0)
 
 
 if __name__ == "__main__":

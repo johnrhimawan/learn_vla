@@ -46,6 +46,7 @@ milestones:
       local_contact_time_prediction: complete
       randomized_render_dataset_generator: complete
       randomized_render_smoke_validation: complete
+      randomized_classical_baseline_evaluation: complete
       production_randomized_render_dataset: planned
       learned_detector_and_temporal_estimator: planned
       spin_classification: planned

@@ -270,6 +270,18 @@ missing files; see
 and its
 [`stereo preview`](results/tennis/flight_dataset_preview_v0.png).
 
+Measure the fixed color detector on the randomized data:
+
+```bash
+scripts/run python examples/evaluate_tennis_perception.py \
+  artifacts/tennis-flight-v0-smoke \
+  --output results/tennis/randomized_perception_baseline_smoke_v0.json
+```
+
+The smoke result deliberately fails the strict M1 gate: 65.1% stereo detection
+coverage, 75% timing-prediction coverage, and 39.1 ms contact-time RMSE. This is
+the baseline the learned M1 estimator must beat.
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous

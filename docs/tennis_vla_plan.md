@@ -89,6 +89,13 @@ and every referenced image. The tracked smoke report contains four episodes
 and 86 images generated from clean revision `de0c8e6`; every validation check
 passes. Spin and texture-map randomization remain open.
 
+The fixed color baseline fails the strict randomized smoke gate. It detects
+28/43 stereo frames (65.1%), produces contact-time estimates for three of four
+episodes, and reaches 39.1 ms timing RMSE. Its 1.57 cm position RMSE applies
+only to detected frames, so coverage is part of the gate and prevents that
+selective result from being treated as a pass. This measured failure is the
+training target for the learned detector and temporal estimator.
+
 ### M2 — Racket control and contact
 
 Start with a stationary ball, then slow feeds, then feeds between 8 and 18 m/s.
