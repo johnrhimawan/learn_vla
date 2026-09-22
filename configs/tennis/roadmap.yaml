@@ -49,6 +49,7 @@ milestones:
       randomized_classical_baseline_evaluation: complete
       production_randomized_render_dataset: planned
       learned_detector_training_pipeline: complete
+      learned_detector_development_gate: complete
       learned_detector_production_training: planned
       learned_temporal_estimator: planned
       spin_classification: planned

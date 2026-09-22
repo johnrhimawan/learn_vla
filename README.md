@@ -279,8 +279,8 @@ scripts/run python examples/evaluate_tennis_perception.py \
 ```
 
 The smoke result deliberately fails the strict M1 gate: 65.1% stereo detection
-coverage, 75% timing-prediction coverage, and 39.1 ms contact-time RMSE. This is
-the baseline the learned M1 estimator must beat.
+coverage and 75% timing-prediction coverage. This is the baseline the learned
+M1 estimator must beat.
 
 Train the full-resolution heatmap detector, then evaluate it through the same
 stereo gate:
@@ -302,6 +302,15 @@ scripts/run python examples/evaluate_tennis_ball_detector.py \
 The detector keeps the render at full resolution because a distant tennis ball
 can occupy one pixel. Its configuration and strict coverage-aware gates are in
 [`configs/tennis/perception_training_v0.json`](configs/tennis/perception_training_v0.json).
+
+The recorded development checkpoint was trained on 100 visual domains and
+evaluated on 40 disjoint validation/test domains. It reaches 99.26% valid
+stereo coverage, 2.52 cm 3D position RMSE, 100% timing coverage, and 18.3 ms
+contact-time RMSE. See the
+[`training report`](results/tennis/ball_detector_dev_training_v0.json),
+[`evaluation report`](results/tennis/ball_detector_dev_evaluation_v0.json), and
+[`7 KB checkpoint`](checkpoints/tennis/ball_detector_dev_v0.pt). This is a
+development pass at 320×240 and 10 Hz; the production M1 gate remains open.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

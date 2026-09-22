@@ -89,7 +89,8 @@ def evaluate_stereo_detector(
     benchmark_name: str,
     detector_source: dict[str, Any],
     prediction_lead_s: float = 0.15,
-    history_frames: int = 5,
+    history_window_s: float = 0.10,
+    maximum_ray_gap_m: float = 0.10,
 ) -> dict[str, Any]:
     """Score an image detector without accessing privileged state at inference."""
     dataset_dir = Path(dataset_dir)
@@ -121,6 +122,8 @@ def evaluate_stereo_detector(
             rays.extend((origin, direction))
         else:
             triangulated = triangulate_rays(*rays)
+            if triangulated.ray_gap_m > maximum_ray_gap_m:
+                continue
             truth = np.asarray(frame["ball"]["position_world_m"], dtype=np.float64)
             position_errors[split].append(
                 float(np.linalg.norm(triangulated.position_m - truth))
@@ -141,9 +144,16 @@ def evaluate_stereo_detector(
             for observation in tracks[episode["episode_id"]]
             if observation[0] <= true_contact_time - prediction_lead_s
         ]
-        if len(eligible) < history_frames:
+        if len(eligible) < 2:
             continue
-        selected = eligible[-history_frames:]
+        latest_track_time = eligible[-1][0]
+        selected = [
+            observation
+            for observation in eligible
+            if observation[0] >= latest_track_time - history_window_s - 1e-12
+        ]
+        if len(selected) < 2:
+            continue
         track = fit_constant_velocity_track(
             np.asarray([item[0] for item in selected]),
             np.asarray([item[1] for item in selected]),
@@ -188,7 +198,8 @@ def evaluate_stereo_detector(
         "inference_inputs": ["camera1 RGB", "camera2 RGB", "camera calibration"],
         "privileged_state_used_for_scoring_only": True,
         "prediction_lead_s": prediction_lead_s,
-        "history_frames": history_frames,
+        "history_window_s": history_window_s,
+        "maximum_stereo_ray_gap_m": maximum_ray_gap_m,
         "metrics": overall,
         "split_metrics": split_metrics,
         "m1_gate_check": {
@@ -224,7 +235,8 @@ def evaluate_color_stereo_baseline(
     dataset_dir: Path,
     *,
     prediction_lead_s: float = 0.15,
-    history_frames: int = 5,
+    history_window_s: float = 0.10,
+    maximum_ray_gap_m: float = 0.10,
 ) -> dict[str, Any]:
     """Score fixed yellow segmentation without accessing state during inference."""
     return evaluate_stereo_detector(
@@ -233,5 +245,6 @@ def evaluate_color_stereo_baseline(
         benchmark_name="randomized-color-stereo-baseline-v0",
         detector_source={"type": "fixed_rgb_ratio"},
         prediction_lead_s=prediction_lead_s,
-        history_frames=history_frames,
+        history_window_s=history_window_s,
+        maximum_ray_gap_m=maximum_ray_gap_m,
     )

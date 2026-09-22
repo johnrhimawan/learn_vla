@@ -16,6 +16,9 @@
   "reason_for_no_downsampling": "the far ball can occupy one rendered pixel",
   "spatial_context": "full-resolution depthwise 5x5 convolution",
   "evaluation": {
+    "local_velocity_history_s": 0.1,
+    "prediction_lead_s": 0.15,
+    "maximum_stereo_ray_gap_m": 0.1,
     "stereo_detection_rate_minimum": 0.99,
     "position_rmse_m_maximum": 0.05,
     "contact_time_prediction_rate_minimum": 0.99,

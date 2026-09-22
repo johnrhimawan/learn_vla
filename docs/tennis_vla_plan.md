@@ -91,10 +91,10 @@ passes. Spin and texture-map randomization remain open.
 
 The fixed color baseline fails the strict randomized smoke gate. It detects
 28/43 stereo frames (65.1%), produces contact-time estimates for three of four
-episodes, and reaches 39.1 ms timing RMSE. Its 1.57 cm position RMSE applies
-only to detected frames, so coverage is part of the gate and prevents that
-selective result from being treated as a pass. This measured failure is the
-training target for the learned detector and temporal estimator.
+episodes, and therefore fails both coverage gates. Its 1.57 cm position RMSE
+applies only to detected frames, so coverage prevents that selective result
+from being treated as a pass. This measured failure is the training target for
+the learned detector and temporal estimator.
 
 The learned detector pipeline is implemented as a full-resolution pixel
 heatmap model. It deliberately avoids spatial downsampling because the ball can
@@ -111,6 +111,17 @@ necessary because averaging across roughly 77,000 pixels hid rare bright court
 and robot false positives. In the smoke diagnostic, hard-negative mining
 reduced test pixel RMSE from 38.8 px to 0.41 px; the broader split remains the
 authoritative development evaluation.
+
+The first broader development experiment uses 100 training, 20 validation, and
+20 test domains at 320x240 and 10 Hz. The frozen checkpoint has 769 parameters
+and uses only RGB at inference. Calibrated stereo rejects pairs whose
+observation rays remain more than 10 cm apart, and the local velocity fit uses
+a fixed 100 ms history so its behavior does not change with frame rate. Across all 1,347
+frames, the system retains 99.26% valid stereo coverage, measures 2.52 cm 3D
+position RMSE, predicts contact for all 140 episodes, and reaches 18.3 ms
+contact-time RMSE. This passes the development numeric gate. M1 stays in
+progress until the 512x384, 50 Hz production split passes and the spin class
+and reachable intercept window are implemented.
 
 ### M2 — Racket control and contact
 
