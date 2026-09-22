@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "audit": "phase-one-contact-curriculum-kinematic-v0",
+  "source": {
+    "git_revision": "23c8b7e62224ddb569abe26b52c350455513ce76",
+    "tracked_files_dirty": false
+  },
+  "envelope": {
+    "source_x_m": [
+      9.5,
+      11.0
+    ],
+    "source_y_m": [
+      -0.5,
+      0.5
+    ],
+    "source_z_m": [
+      1.2,
+      1.6
+    ],
+    "forward_speed_m_s": [
+      14.0,
+      18.0
+    ],
+    "lateral_speed_m_s": [
+      -0.5,
+      0.5
+    ],
+    "vertical_speed_m_s": [
+      4.0,
+      5.0
+    ]
+  },
+  "ik_config": {
+    "position_tolerance_m": 0.015,
+    "normal_tolerance_deg": 5.0,
+    "restarts": 4,
+    "maximum_iterations": 180
+  },
+  "splits": {
+    "train": {
+      "seed_start": 0,
+      "feeds": 200,
+      "reachable": 194,
+      "reachable_fraction": 0.97,
+      "failed_seeds": [
+        25,
+        68,
+        79,
+        91,
+        92,
+        144
+      ],
+      "first_intercept_bounds_m": {
+        "minimum": [
+          -10.035406592554283,
+          -0.8933570905564523,
+          0.1762677125397444
+        ],
+        "maximum": [
+          -9.503413209113976,
+          0.919095257958822,
+          1.195640028746415
+        ]
+      }
+    },
+    "validation": {
+      "seed_start": 8000,
+      "feeds": 200,
+      "reachable": 194,
+      "reachable_fraction": 0.97,
+      "failed_seeds": [
+        8046,
+        8091,
+        8165,
+        8169,
+        8179,
+        8186
+      ],
+      "first_intercept_bounds_m": {
+        "minimum": [
+          -10.071499969531363,
+          -1.0205891850119273,
+          0.32100632467166146
+        ],
+        "maximum": [
+          -9.534440076523362,
+          0.8968961109270235,
+          1.2108186350899333
+        ]
+      }
+    },
+    "test": {
+      "seed_start": 9000,
+      "feeds": 200,
+      "reachable": 197,
+      "reachable_fraction": 0.985,
+      "failed_seeds": [
+        9055,
+        9144,
+        9161
+      ],
+      "first_intercept_bounds_m": {
+        "minimum": [
+          -10.086585207067012,
+          -0.9527011594723555,
+          0.18254399106551675
+        ],
+        "maximum": [
+          -9.53438818300309,
+          1.088300811887076,
+          1.208894614479318
+        ]
+      }
+    }
+  },
+  "total_feeds": 600,
+  "total_reachable": 585,
+  "reachable_fraction": 0.975,
+  "first_intercept_bounds_m": {
+    "minimum": [
+      -10.086585207067012,
+      -1.0205891850119273,
+      0.1762677125397444
+    ],
+    "maximum": [
+      -9.503413209113976,
+      1.088300811887076,
+      1.2108186350899333
+    ]
+  },
+  "gate": {
+    "minimum_test_reachable_fraction": 0.95,
+    "test_pass": true
+  },
+  "limitations": [
+    "This gate measures kinematic eligibility, not executed racket contact.",
+    "Joint speed, acceleration, and collision constraints are not yet applied.",
+    "The envelope is a phase-one curriculum and does not cover full-court feeds."
+  ]
+}

@@ -156,6 +156,10 @@ lateral velocity to +/-0.5 m/s, launch height to 1.2-1.6 m, forward speed to
 14-18 m/s, and vertical speed to 4-5 m/s. It leaves the broader perception
 distribution unchanged. Separate train, validation, and test seed ranges must
 each exceed 95% kinematic eligibility before dynamic swing work uses them.
+The recorded 200-feed splits reach 97.0% for train, 97.0% for validation, and
+98.5% for the untouched test seeds. The report is
+`results/tennis/contact_curriculum_kinematic_audit_v0.json`. These rates prove
+pose eligibility and do not yet prove executed contact.
 
 ### M3 — Behavior-cloned visual returns
 

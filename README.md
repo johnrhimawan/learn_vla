@@ -333,6 +333,9 @@ audit is intentionally kinematic; speed, acceleration, collision-free swing,
 and executed contact remain M2 work. In the first 100 broad feeds, 52 have a
 kinematically reachable post-bounce pose; the report is in
 [`results/tennis/intercept_kinematic_audit_v0.json`](results/tennis/intercept_kinematic_audit_v0.json).
+The narrower contact curriculum raises held-out kinematic eligibility to 98.5%
+over 200 test feeds; see
+[`results/tennis/contact_curriculum_kinematic_audit_v0.json`](results/tennis/contact_curriculum_kinematic_audit_v0.json).
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
