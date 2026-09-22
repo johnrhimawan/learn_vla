@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "benchmark": "learned-heatmap-stereo-v0",
+  "evaluator_source": {
+    "git_revision": "f9ec71fbc36f887293d458a8ca9d542fcc96ec2a",
+    "tracked_files_dirty": false
+  },
+  "detector_source": {
+    "type": "BallHeatmapDetector",
+    "checkpoint": "checkpoints/tennis/ball_detector_dev_v0.pt",
+    "confidence_threshold": 0.2
+  },
+  "dataset": {
+    "name": "tennis-flight-v0",
+    "source": {
+      "git_revision": "994707dec321c8abdf3a19505e75f7f189d83a61",
+      "tracked_files_dirty": false
+    },
+    "episodes": 140,
+    "frames": 1347
+  },
+  "inference_inputs": [
+    "camera1 RGB",
+    "camera2 RGB",
+    "camera calibration"
+  ],
+  "privileged_state_used_for_scoring_only": true,
+  "prediction_lead_s": 0.15,
+  "history_window_s": 0.1,
+  "maximum_stereo_ray_gap_m": 0.1,
+  "metrics": {
+    "frames": 1347,
+    "stereo_detections": 1337,
+    "detection_rate": 0.9925760950259837,
+    "position_rmse_m": 0.02520111936469386,
+    "position_p95_error_m": 0.04645370981181832,
+    "episodes": 140,
+    "contact_time_predictions": 140,
+    "contact_time_prediction_rate": 1.0,
+    "contact_time_rmse_s": 0.018254725943407005,
+    "contact_time_max_error_s": 0.05012089550348331
+  },
+  "split_metrics": {
+    "train": {
+      "frames": 958,
+      "stereo_detections": 954,
+      "detection_rate": 0.9958246346555324,
+      "position_rmse_m": 0.025143262767064842,
+      "position_p95_error_m": 0.04622841226501427,
+      "episodes": 100,
+      "contact_time_predictions": 100,
+      "contact_time_prediction_rate": 1.0,
+      "contact_time_rmse_s": 0.01955892825880215,
+      "contact_time_max_error_s": 0.05012089550348331
+    },
+    "validation": {
+      "frames": 195,
+      "stereo_detections": 190,
+      "detection_rate": 0.9743589743589743,
+      "position_rmse_m": 0.023651286561850223,
+      "position_p95_error_m": 0.03699852389612733,
+      "episodes": 20,
+      "contact_time_predictions": 20,
+      "contact_time_prediction_rate": 1.0,
+      "contact_time_rmse_s": 0.013856521613361093,
+      "contact_time_max_error_s": 0.03843206894556883
+    },
+    "test": {
+      "frames": 194,
+      "stereo_detections": 193,
+      "detection_rate": 0.9948453608247423,
+      "position_rmse_m": 0.02690781211563681,
+      "position_p95_error_m": 0.04691363465997354,
+      "episodes": 20,
+      "contact_time_predictions": 20,
+      "contact_time_prediction_rate": 1.0,
+      "contact_time_rmse_s": 0.015095813012086751,
+      "contact_time_max_error_s": 0.046162608146709916
+    }
+  },
+  "m1_gate_check": {
+    "evaluated_split": "test",
+    "minimum_detection_rate": 0.99,
+    "detection_rate_pass": true,
+    "position_rmse_threshold_m": 0.05,
+    "position_rmse_pass": true,
+    "minimum_contact_time_prediction_rate": 0.99,
+    "contact_time_prediction_rate_pass": true,
+    "contact_time_rmse_threshold_s": 0.025,
+    "contact_time_rmse_pass": true
+  },
+  "interpretation": "Accuracy on detected frames cannot compensate for missed stereo pairs; the randomized gate requires both coverage and error thresholds."
+}

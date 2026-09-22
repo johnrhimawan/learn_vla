@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "dataset": "tennis-flight-v0",
+  "source": {
+    "git_revision": "994707dec321c8abdf3a19505e75f7f189d83a61",
+    "tracked_files_dirty": false
+  },
+  "splits": {
+    "train": {
+      "episodes": 100,
+      "frames": 958
+    },
+    "validation": {
+      "episodes": 20,
+      "frames": 195
+    },
+    "test": {
+      "episodes": 20,
+      "frames": 194
+    }
+  },
+  "episodes": 140,
+  "frames": 1347,
+  "cameras_per_frame": 2,
+  "observation_hz": 10.0,
+  "image_size_px": [
+    320,
+    240
+  ],
+  "validation": {
+    "manifest_counts_match": true,
+    "split_seeds_disjoint": true,
+    "referenced_images": 2694,
+    "missing_images": 0
+  },
+  "limitations": [
+    "The current ball model has no spin.",
+    "Court appearance varies by color and lighting but has no image texture maps.",
+    "Motion blur is approximated by averaging three exposure-time renders."
+  ]
+}

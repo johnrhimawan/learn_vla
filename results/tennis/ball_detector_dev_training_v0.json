@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "model": "BallHeatmapDetector",
+  "checkpoint": "checkpoints/tennis/ball_detector_dev_v0.pt",
+  "train_images": 1916,
+  "validation_images": 390,
+  "best_validation_pixel_rmse": 9.622774124145508,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.3463691468040148,
+      "validation_pixel_rmse": 82.6743392944336
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.2621440589427948,
+      "validation_pixel_rmse": 42.501808166503906
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.07913595195859671,
+      "validation_pixel_rmse": 21.2546443939209
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.042752742984642586,
+      "validation_pixel_rmse": 19.514535903930664
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.03229957255534828,
+      "validation_pixel_rmse": 18.618051528930664
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.02888194238767028,
+      "validation_pixel_rmse": 15.784761428833008
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.022356861333052317,
+      "validation_pixel_rmse": 13.379103660583496
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.022698861888299386,
+      "validation_pixel_rmse": 16.110942840576172
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.020021142496261746,
+      "validation_pixel_rmse": 16.471363067626953
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.021408565109595656,
+      "validation_pixel_rmse": 15.972432136535645
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.01809280552358056,
+      "validation_pixel_rmse": 16.54884910583496
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.01576904075530668,
+      "validation_pixel_rmse": 16.259735107421875
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.019254777594081438,
+      "validation_pixel_rmse": 16.094579696655273
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.018695390732803692,
+      "validation_pixel_rmse": 13.032418251037598
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.017560273600975052,
+      "validation_pixel_rmse": 16.349184036254883
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.015972149888208758,
+      "validation_pixel_rmse": 16.349166870117188
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.013275831365414584,
+      "validation_pixel_rmse": 11.573750495910645
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.012826092711960276,
+      "validation_pixel_rmse": 10.076571464538574
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.013578102147827545,
+      "validation_pixel_rmse": 16.349159240722656
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.013250827548714976,
+      "validation_pixel_rmse": 11.57371997833252
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.015414687436229238,
+      "validation_pixel_rmse": 11.573736190795898
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.01403754308121279,
+      "validation_pixel_rmse": 12.323836326599121
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.011556412157369777,
+      "validation_pixel_rmse": 14.935321807861328
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.01160359288332984,
+      "validation_pixel_rmse": 14.935338973999023
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.011021482606884092,
+      "validation_pixel_rmse": 14.728063583374023
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.010538819096594428,
+      "validation_pixel_rmse": 15.790143966674805
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.011036450371223812,
+      "validation_pixel_rmse": 9.622774124145508
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.011850674013840035,
+      "validation_pixel_rmse": 15.790205001831055
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.010282616581146915,
+      "validation_pixel_rmse": 16.691593170166016
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.010838112485362216,
+      "validation_pixel_rmse": 16.857006072998047
+    }
+  ],
+  "training": {
+    "seed": 2026,
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 0.003,
+    "device": "mps",
+    "source": {
+      "git_revision": "f68317fb53263d08773aa1e40a9b7ce8ddbe0bce",
+      "tracked_files_dirty": false
+    },
+    "dataset_source": {
+      "git_revision": "994707dec321c8abdf3a19505e75f7f189d83a61",
+      "tracked_files_dirty": false
+    }
+  }
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "benchmark": "randomized-color-stereo-baseline-v0",
   "evaluator_source": {
-    "git_revision": "b02f8750639f5c25312b2582ffd8884c17cb97df",
+    "git_revision": "f9ec71fbc36f887293d458a8ca9d542fcc96ec2a",
     "tracked_files_dirty": false
   },
   "detector_source": {
@@ -77,6 +77,7 @@
     }
   },
   "m1_gate_check": {
+    "evaluated_split": "test",
     "minimum_detection_rate": 0.99,
     "detection_rate_pass": false,
     "position_rmse_threshold_m": 0.05,
