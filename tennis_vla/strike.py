@@ -52,6 +52,7 @@ class StrikeSearchConfig:
         34.0,
         36.0,
     )
+    face_yaw_degrees: tuple[float, ...] = (0.0,)
     racket_normal_speeds_m_s: tuple[float, ...] = (
         3.0,
         2.9,
@@ -101,6 +102,8 @@ class StrikeSearchConfig:
     def validate(self) -> None:
         if not self.face_pitch_degrees:
             raise ValueError("face_pitch_degrees cannot be empty")
+        if not self.face_yaw_degrees:
+            raise ValueError("face_yaw_degrees cannot be empty")
         if not self.racket_normal_speeds_m_s:
             raise ValueError("racket_normal_speeds_m_s cannot be empty")
         if any(speed <= 0.0 for speed in self.racket_normal_speeds_m_s):
@@ -294,6 +297,7 @@ class QuinticJointTrajectory:
 class StrikePlan:
     candidate: InterceptCandidate
     face_pitch_degrees: float
+    face_yaw_degrees: float
     requested_racket_normal_speed_m_s: float
     requested_racket_tangent_ratio: float
     requested_racket_tangent_speed_m_s: float
@@ -311,6 +315,7 @@ class StrikePlan:
         return {
             "intercept": self.candidate.metrics(),
             "face_pitch_degrees": self.face_pitch_degrees,
+            "face_yaw_degrees": self.face_yaw_degrees,
             "requested_racket_normal_speed_m_s": (
                 self.requested_racket_normal_speed_m_s
             ),
@@ -593,11 +598,25 @@ def plan_safe_center_strikes(
         planning_flight = BallFlightConfig(
             dt_s=search.planning_ball_timestep_s
         )
-        for pitch_degrees in search.face_pitch_degrees:
+        for pitch_degrees, yaw_degrees in itertools.product(
+            search.face_pitch_degrees,
+            search.face_yaw_degrees,
+        ):
             pitch = np.deg2rad(pitch_degrees)
-            target_normal = np.array([np.cos(pitch), 0.0, np.sin(pitch)])
+            yaw = np.deg2rad(yaw_degrees)
+            target_normal = np.array(
+                [
+                    np.cos(pitch) * np.cos(yaw),
+                    np.cos(pitch) * np.sin(yaw),
+                    np.sin(pitch),
+                ]
+            )
             vertical_tangent = np.array(
-                [-np.sin(pitch), 0.0, np.cos(pitch)]
+                [
+                    -np.sin(pitch) * np.cos(yaw),
+                    -np.sin(pitch) * np.sin(yaw),
+                    np.cos(pitch),
+                ]
             )
             candidates = find_kinematic_intercepts(
                 model,
@@ -750,6 +769,7 @@ def plan_safe_center_strikes(
                                 landing_error,
                                 candidate,
                                 pitch_degrees,
+                                yaw_degrees,
                                 racket_speed,
                                 tangent_ratio,
                                 contact_joint_velocity,
@@ -765,6 +785,7 @@ def plan_safe_center_strikes(
                 _,
                 candidate,
                 pitch_degrees,
+                yaw_degrees,
                 racket_speed,
                 tangent_ratio,
                 contact_joint_velocity,
@@ -791,6 +812,7 @@ def plan_safe_center_strikes(
                 StrikePlan(
                     candidate=candidate,
                     face_pitch_degrees=pitch_degrees,
+                    face_yaw_degrees=yaw_degrees,
                     requested_racket_normal_speed_m_s=racket_speed,
                     requested_racket_tangent_ratio=tangent_ratio,
                     requested_racket_tangent_speed_m_s=(

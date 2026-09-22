@@ -131,6 +131,7 @@ def audit_seed(seed: int) -> dict[str, Any]:
         "intercept_time_s": plan.candidate.time_s,
         "contact_position_m": plan.candidate.ball_position_m.tolist(),
         "face_pitch_degrees": plan.face_pitch_degrees,
+        "face_yaw_degrees": plan.face_yaw_degrees,
         "racket_normal_speed_m_s": plan.requested_racket_normal_speed_m_s,
         "racket_tangent_ratio": plan.requested_racket_tangent_ratio,
         "racket_tangent_speed_m_s": plan.requested_racket_tangent_speed_m_s,
