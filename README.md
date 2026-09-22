@@ -13,6 +13,24 @@ The repository contains only the tennis project. Start with
 milestone status. [`HANDOFF.md`](HANDOFF.md) records the current engineering
 state and the next work in detail.
 
+## The current result
+
+![The fed ball bounces, the Sawyer arm tracks its planned swing, strikes the
+ball, and recovers to the ready pose while the return clears the net and lands
+in the far court.](docs/media/canonical_strike.gif)
+
+This is one real `execute_strike` run on the canonical feed, rendered from the
+executed motion rather than from the plan. The arm meets the ball 2 ms after the
+planned contact time and 1.8 cm from the planned contact point, clears the net
+by 2.87 m, lands the return at x = 4.93 m, y = -0.31 m inside the singles court,
+and recovers to the ready pose in 1.25 s. Those are the values recorded in
+[`canonical_strike_execution_v1.json`](results/tennis/canonical_strike_execution_v1.json).
+
+Read it for what it is: one canonical feed, driven by a privileged planner that
+reads exact simulator ball state. It is not a trained policy and not a held-out
+gate. The 200-feed picture, including the failed sealed gate, is in
+[Verified controller results](#verified-controller-results).
+
 ## Setup
 
 The project uses Python 3.12 and `uv`:
@@ -100,6 +118,13 @@ scripts/run python examples/tennis_intercept_oracle.py --seed 1
 scripts/run python examples/tennis_strike_execution.py
 ```
 
+Re-render the animation at the top of this file:
+
+```bash
+scripts/run python examples/render_tennis_strike.py \
+  --output docs/media/canonical_strike.gif
+```
+
 Run the smaller active-strike development audit:
 
 ```bash
@@ -184,6 +209,7 @@ for tuning. Seeds 10000–10199 are the current v1 development set. Seeds
 | `configs/tennis/` | datasets, evaluation, compute, and milestone contracts |
 | `results/tennis/` | versioned evaluation evidence |
 | `checkpoints/tennis/` | small tracked development checkpoints |
+| `docs/media/` | rendered animations used by this README |
 | `docker/h200/` | CUDA learner runtime for future VLA and RL training |
 
 ## References
