@@ -87,7 +87,13 @@ def audit_seed(seed: int) -> dict[str, Any]:
         feed.position_m,
         feed.velocity_m_s,
     )
-    plans = plan_safe_center_strikes(model, flight, seed=40_000 + seed)
+    planning_diagnostics: dict[str, int | bool] = {}
+    plans = plan_safe_center_strikes(
+        model,
+        flight,
+        seed=40_000 + seed,
+        diagnostics=planning_diagnostics,
+    )
     result: dict[str, Any] = {
         "seed": seed,
         "feed": {
@@ -100,6 +106,7 @@ def audit_seed(seed: int) -> dict[str, Any]:
             "mujoco_first_bounce_m": flight.first_bounce_m.tolist(),
         },
         "planned": bool(plans),
+        "planning_diagnostics": planning_diagnostics,
         "feasible_plan_count": len(plans),
         "selected_plan": None,
         "execution": None,

@@ -551,6 +551,7 @@ def plan_safe_center_strikes(
     limits: SimulationJointMotionLimits | None = None,
     ik_config: RacketIKConfig | None = None,
     seed: int = 2026,
+    diagnostics: dict[str, int | bool] | None = None,
 ) -> list[StrikePlan]:
     """Find legal nonzero-velocity returns ranked by landing-target error."""
     search = search or StrikeSearchConfig()
@@ -561,6 +562,18 @@ def plan_safe_center_strikes(
     start = tennis_ready_configuration(model)
     landing_target = np.asarray(search.landing_target_xy_m, dtype=np.float64)
     site_id = model.site("racket_center").id
+    planning_counts: dict[str, int | bool] = {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": False,
+    }
+
     def search_with_ik_branches(solutions_per_pose: int) -> list[StrikePlan]:
         coarse_records = []
         planning_flight = BallFlightConfig(
@@ -581,6 +594,7 @@ def plan_safe_center_strikes(
                 ik_config=ik_config,
                 seed=seed,
             )
+            planning_counts["kinematic_candidates"] += len(candidates)
             for candidate in candidates:
                 data = mujoco.MjData(model)
                 data.qpos[:7] = candidate.solution.joint_positions_rad
@@ -608,6 +622,7 @@ def plan_safe_center_strikes(
                         )
                     except ValueError:
                         continue
+                    planning_counts["joint_velocity_directions"] += 1
 
                     for racket_speed in search.racket_normal_speeds_m_s:
                         contact_joint_velocity = (
@@ -624,6 +639,7 @@ def plan_safe_center_strikes(
                             )
                         except ValueError:
                             continue
+                        planning_counts["impact_approach_candidates"] += 1
                         trajectory = (
                             QuinticJointTrajectory.from_boundary_conditions(
                                 start,
@@ -642,6 +658,7 @@ def plan_safe_center_strikes(
                             < limits.minimum_joint_limit_margin_rad - 1e-9
                         ):
                             continue
+                        planning_counts["approach_motion_feasible"] += 1
                         if not trajectory_is_execution_safe(
                             model,
                             trajectory,
@@ -653,6 +670,7 @@ def plan_safe_center_strikes(
                             ),
                         ):
                             continue
+                        planning_counts["approach_execution_safe"] += 1
                         predicted_recovery_position = (
                             candidate.solution.joint_positions_rad
                             + contact_joint_velocity
@@ -680,6 +698,7 @@ def plan_safe_center_strikes(
                             ),
                         ) is None:
                             continue
+                        planning_counts["recovery_feasible"] += 1
                         predicted_return = simulate_ball_flight(
                             candidate.ball_position_m,
                             outgoing_velocity,
@@ -694,6 +713,7 @@ def plan_safe_center_strikes(
                             or bounce is None
                         ):
                             continue
+                        planning_counts["coarse_legal_returns"] += 1
                         landing_error = float(
                             np.linalg.norm(bounce[:2] - landing_target)
                         )
@@ -758,15 +778,17 @@ def plan_safe_center_strikes(
                     landing_error_m=landing_error,
                 )
             )
+            planning_counts["full_legal_returns"] += 1
             if len(plans) >= search.maximum_returned_plans:
                 break
         return plans
 
     plans = search_with_ik_branches(1)
     if not plans and search.alternative_ik_solutions > 1:
+        planning_counts["used_alternative_ik_search"] = True
         plans = search_with_ik_branches(search.alternative_ik_solutions)
 
-    return sorted(
+    ranked_plans = sorted(
         plans,
         key=lambda plan: (
             max(
@@ -786,3 +808,7 @@ def plan_safe_center_strikes(
             -float(plan.predicted_return.net_clearance_m or 0.0),
         ),
     )
+    if diagnostics is not None:
+        diagnostics.clear()
+        diagnostics.update(planning_counts)
+    return ranked_plans

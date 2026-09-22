@@ -58,7 +58,13 @@ class TennisStrikeTests(unittest.TestCase):
             np.array([-17.75, 0.0, 4.6]),
         )
         self.assertTrue(flight.legal_first_bounce)
-        plans = plan_safe_center_strikes(self.model, flight, seed=40_001)
+        diagnostics = {}
+        plans = plan_safe_center_strikes(
+            self.model,
+            flight,
+            seed=40_001,
+            diagnostics=diagnostics,
+        )
         self.assertTrue(plans)
         plan = plans[0]
         self.assertTrue(plan.predicted_return.legal_first_bounce)
@@ -82,6 +88,9 @@ class TennisStrikeTests(unittest.TestCase):
         self.assertTrue(
             trajectory_is_execution_safe(self.model, plan.trajectory)
         )
+        self.assertGreater(diagnostics["kinematic_candidates"], 0)
+        self.assertGreater(diagnostics["recovery_feasible"], 0)
+        self.assertGreater(diagnostics["full_legal_returns"], 0)
 
     def test_receding_ball_candidates_are_rejected_without_error(self) -> None:
         flight = simulate_ball_flight(
