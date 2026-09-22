@@ -69,7 +69,8 @@ milestones:
       zero_velocity_minimum_jerk_arrival: complete
       dynamically_feasible_swing_trajectory: in_progress
       actuator_trajectory_tracking: complete
-      nonzero_contact_velocity_planning: planned
+      nonzero_contact_velocity_planning: in_progress
+      canonical_active_strike_plan: in_progress
       closed_loop_contact_execution: planned
       tennis_strike_oracle_dataset: planned
   - id: M3
