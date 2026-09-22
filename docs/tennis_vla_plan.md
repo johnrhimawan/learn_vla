@@ -197,45 +197,50 @@ terminal joint velocity. It searches racket-face pitch and normal speed, solves
 the redundant racket-velocity Jacobian with a deterministic minimum-infinity
 norm solution, and rejects trajectories that exceed the existing speed,
 acceleration, or joint-margin gates. For the center feed at `[10.5, 0, 1.4]` m
-and `[-17.75, 0, 4.6]` m/s, it selects a 2.1 m/s racket-normal speed and predicts
-a legal return. The clean analytical report is
-`results/tennis/canonical_strike_plan_v0.json`.
+and `[-17.75, 0, 4.6]` m/s, the current recovery-screened plan selects a 22°
+face, 3.0 m/s racket-normal speed, and -0.75 vertical tangent ratio. It predicts
+a legal return.
 
 The same strike now runs against the live MuJoCo ball. An explicit ball-court
 contact pair matches the analytical canonical bounce at separation within 3 ms,
 2.8 cm, and 0.153 m/s. A 250 Hz trajectory reference is interpolated by a 1 kHz
-inverse-dynamics and feedback loop. It contacts the ball 2 ms before the planned
-time, separates 10 ms later, stays within 0.0087 rad maximum joint-tracking
-error, and produces a measured outgoing velocity of `[8.766, 0.016, 7.332]`
-m/s. Analytical continuation from that measured state clears the net by 1.129
-m and bounces legally at x=2.122 m. There are no clipped controls or unexpected
-contacts. The execution report is
-`results/tennis/canonical_strike_execution_v0.json`.
+inverse-dynamics and feedback loop. It contacts the ball 2 ms after the planned
+time, separates 10 ms later, stays within 0.0076 rad maximum joint-tracking
+error, and produces a measured outgoing velocity of
+`[10.073, -0.210, 8.444]` m/s. Analytical continuation from that measured state
+clears the net by 2.873 m and bounces legally at x=4.926 m. A separately
+screened 1.25 s trajectory then returns the arm to the ready pose with 0.00287
+rad final error and 13.08 rad/s^2 peak recovery acceleration. There are no
+clipped controls or unexpected contacts. The execution report is
+`results/tennis/canonical_strike_execution_v1.json`.
 
 The active-strike development planner extends the action from normal racket
 speed to a three-dimensional velocity with a vertical tangential component.
 It evaluates multiple redundant IK branches, prefers plans with motion-limit
 headroom, and rejects collisions or compensated commands that would clip during
-the approach and 50 ms contact continuation. Most critically, its privileged
-contact-state prediction now rolls the ball through the calibrated MuJoCo
-court contact. The independent analytical flight remains a calibration check;
-it is no longer assumed exact after the bounce.
+the approach and 50 ms contact continuation. It also rejects strokes without a
+predicted bounded path back to the receiving pose. Recovery planning reserves
+acceleration headroom at 13.6 rad/s^2 while the measured acceptance limit stays
+at 15 rad/s^2. Its privileged contact-state prediction rolls the ball through
+the calibrated MuJoCo court contact. The independent analytical flight remains
+a calibration check; it is no longer assumed exact after the bounce.
 
 On the 20-seed test-development prefix, all 20 feeds produce a safe plan, live
-ball-racket contact, and a legal return. Every strict execution check passes.
-Median contact-time error is 2.0 ms, median contact-position error is 1.78 cm,
-median outgoing-velocity model error is 0.925 m/s, and the 95th-percentile
-maximum joint-tracking error is 0.00945 rad. The minimum measured net clearance
-is 1.835 m. The clean evidence is
-`results/tennis/active_strike_development_v0.json`.
+ball-racket contact, a legal return, and a completed recovery to the ready pose.
+Every strict execution check passes. Median contact-time error is 2.0 ms,
+median contact-position error is 1.78 cm, median outgoing-velocity model error
+is 0.884 m/s, and the 95th-percentile maximum joint-tracking error is 0.00976
+rad. Recovery takes 1.0–1.5 s; its maximum measured acceleration is 14.80
+rad/s^2 and its maximum final joint error is 0.00308 rad. The minimum measured
+net clearance is 0.917 m. The clean evidence is
+`results/tennis/active_strike_development_v1.json`.
 
 This completes the 20-feed development gate, not M2. Because those seeds drove
 planner corrections, the final active-strike test is reserved at seeds
-12000–12199. That untouched 200-feed audit, a bounded recovery trajectory after
-separation, and hardware velocity, acceleration, and torque limits remain
-before exporting `tennis-strike-oracle-v0`. Contact-phase acceleration is
-recorded but still has
-no hardware-derived acceptance gate.
+12000–12199. That untouched 200-feed audit and hardware velocity, acceleration,
+and torque limits remain before exporting `tennis-strike-oracle-v0`.
+Contact-phase acceleration is recorded but still has no hardware-derived
+acceptance gate.
 
 ### M3 — Behavior-cloned visual returns
 
@@ -361,8 +366,9 @@ adapted only through a versioned action schema.
 7. Add calibrated spin and string-bed response.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
    **Buffered floor-safe IK, zero-velocity minimum-jerk arrival, 250 Hz arrival
-   tracking, and a 20-feed live active-strike development gate are implemented;
-   the 200-feed held-out audit, recovery motion, and dataset export remain.**
+   tracking, a 20-feed live active-strike development gate, and bounded
+   post-strike recovery are implemented; the 200-feed held-out audit and
+   dataset export remain.**
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 

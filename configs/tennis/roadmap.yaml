@@ -80,9 +80,10 @@ milestones:
       calibrated_mujoco_flight_oracle: complete
       active_strike_collision_screening: complete
       active_strike_development_gate: complete
+      active_strike_recovery_development_gate: complete
       closed_loop_contact_execution: in_progress
       heldout_active_strike_execution: in_progress
-      post_strike_recovery: planned
+      post_strike_recovery: complete
       tennis_strike_oracle_dataset: planned
   - id: M3
     name: behavior_cloned_returns

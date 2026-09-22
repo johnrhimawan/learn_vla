@@ -360,11 +360,11 @@ The active-strike planner adds nonzero three-dimensional racket velocity,
 multi-branch IK, collision and command screening through contact, and a
 calibrated MuJoCo post-bounce flight oracle. On the 20-seed development prefix,
 all 20 planned, contacted the live ball, cleared the net, landed legally, and
-passed the controller checks. Median contact-time error is 2.0 ms and
-median contact-position error is 1.78 cm. See the
-[`development report`](results/tennis/active_strike_development_v0.json).
-The untouched 200-feed gate at seeds 12000–12199 and post-strike recovery remain
-M2 work.
+returned the arm to its ready pose without a controller safety failure. Median
+contact-time error is 2.0 ms, median contact-position error is 1.78 cm, and
+recovery takes 1.0–1.5 s. See the
+[`development report`](results/tennis/active_strike_development_v1.json).
+The untouched 200-feed gate at seeds 12000–12199 remains M2 work.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
