@@ -137,13 +137,21 @@ class FlightBallImageDataset(Dataset[dict[str, Any]]):
 
 
 class BallHeatmapDetector(nn.Module):
-    """Classify every RGB pixel without downsampling a one-pixel distant ball."""
+    """Classify every pixel with local context and no spatial downsampling."""
 
     def __init__(self, channels: int = 24) -> None:
         super().__init__()
         self.channels = channels
         self.network = nn.Sequential(
             nn.Conv2d(3, channels, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(
+                channels,
+                channels,
+                kernel_size=5,
+                padding=2,
+                groups=channels,
+            ),
             nn.ReLU(inplace=True),
             nn.Conv2d(channels, channels, kernel_size=1),
             nn.ReLU(inplace=True),

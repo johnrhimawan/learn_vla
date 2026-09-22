@@ -98,7 +98,8 @@ training target for the learned detector and temporal estimator.
 
 The learned detector pipeline is implemented as a full-resolution pixel
 heatmap model. It deliberately avoids spatial downsampling because the ball can
-occupy one pixel in early receiving-half frames. Training uses only the train
+occupy one pixel in early receiving-half frames. A depthwise 5x5 layer adds
+local shape context without discarding that pixel. Training uses only the train
 split, selects a checkpoint by validation pixel RMSE, and evaluates the frozen
 checkpoint through the same calibrated stereo and timing gate as the fixed
 baseline. A small smoke probe verified optimization and checkpoint loading;

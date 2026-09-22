@@ -14,6 +14,7 @@
   "deployment_output": "ball-center pixel and confidence",
   "downsampling": false,
   "reason_for_no_downsampling": "the far ball can occupy one rendered pixel",
+  "spatial_context": "full-resolution depthwise 5x5 convolution",
   "evaluation": {
     "stereo_detection_rate_minimum": 0.99,
     "position_rmse_m_maximum": 0.05,
