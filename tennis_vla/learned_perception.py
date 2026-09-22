@@ -160,21 +160,24 @@ def focal_heatmap_loss(logits: torch.Tensor, targets: torch.Tensor) -> torch.Ten
     positive = targets.eq(1.0)
     negative = targets.lt(1.0)
     negative_weights = (1.0 - targets).pow(4)
-    positive_loss = (
+    positive_penalty = -(
         torch.log(probabilities) * (1.0 - probabilities).pow(2) * positive
-    ).sum()
-    negative_loss = (
+    )
+    negative_penalty = -(
         torch.log(1.0 - probabilities)
         * probabilities.pow(2)
         * negative_weights
         * negative
-    ).sum()
-    positive_count = positive.sum().clamp(min=1)
-    negative_count = negative.sum().clamp(min=1)
-    # A tennis ball can occupy one output cell among tens of thousands. Giving
-    # positive and negative terms equal aggregate weight prevents the initial
-    # background gradient from collapsing every probability toward zero.
-    return -(positive_loss / positive_count + negative_loss / negative_count)
+    )
+    positive_loss = positive_penalty.flatten(1).sum(dim=1).mean()
+    flattened_negative = negative_penalty.flatten(1)
+    hard_negative_count = min(256, flattened_negative.shape[1])
+    hard_negative_loss = flattened_negative.topk(
+        hard_negative_count, dim=1
+    ).values.mean()
+    # Hard-negative mining prevents rare bright court or robot pixels from
+    # disappearing inside the average of roughly 77,000 background pixels.
+    return positive_loss + hard_negative_loss
 
 
 def decode_heatmaps(

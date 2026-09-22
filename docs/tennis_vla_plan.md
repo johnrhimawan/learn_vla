@@ -105,6 +105,12 @@ baseline. A small smoke probe verified optimization and checkpoint loading;
 the next recorded experiment expands the number of visual domains before any
 claim about held-out performance.
 
+The loss mines the 256 hardest background pixels in every image. This is
+necessary because averaging across roughly 77,000 pixels hid rare bright court
+and robot false positives. In the smoke diagnostic, hard-negative mining
+reduced test pixel RMSE from 38.8 px to 0.41 px; the broader split remains the
+authoritative development evaluation.
+
 ### M2 — Racket control and contact
 
 Start with a stationary ball, then slow feeds, then feeds between 8 and 18 m/s.

@@ -8,7 +8,7 @@
   "batch_size": 32,
   "learning_rate": 0.001,
   "optimizer": "AdamW",
-  "loss": "balanced CenterNet-style focal heatmap loss",
+  "loss": "CenterNet-style focal heatmap loss with 256 per-image hard negatives",
   "checkpoint_selection": "validation pixel RMSE",
   "deployment_inputs": ["one RGB camera image"],
   "deployment_output": "ball-center pixel and confidence",
