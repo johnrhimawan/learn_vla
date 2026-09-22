@@ -21,6 +21,8 @@ stages:
   - id: perception
     milestone: M1
     objective: detect_and_predict_ball_flight
+    dataset: tennis-flight-v0
+    config: configs/tennis/perception_training_v0.json
     precision: bfloat16
     validation_metric: ball_3d_rmse_m
   - id: behavior_cloning

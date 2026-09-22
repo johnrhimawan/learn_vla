@@ -13,6 +13,7 @@ import numpy as np
 class BallDetection:
     pixel_xy: np.ndarray
     pixel_count: int
+    confidence: float = 1.0
 
 
 @dataclass(frozen=True)

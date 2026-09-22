@@ -19,6 +19,11 @@ from tennis_vla.flight_dataset import (
     generate_flight_dataset,
     validate_flight_dataset,
 )
+from tennis_vla.learned_perception import (
+    FlightBallImageDataset,
+    LearnedBallDetector,
+    train_ball_heatmap_detector,
+)
 from tennis_vla.perception import (
     camera_calibration,
     camera_ray,
@@ -116,6 +121,31 @@ class TennisFlightDatasetTests(unittest.TestCase):
             self.assertEqual(baseline["metrics"]["frames"], report["frames"])
             self.assertGreaterEqual(baseline["metrics"]["detection_rate"], 0.0)
             self.assertLessEqual(baseline["metrics"]["detection_rate"], 1.0)
+
+            training_images = FlightBallImageDataset(
+                root, "train", image_size=(64, 48)
+            )
+            sample = training_images[0]
+            self.assertEqual(tuple(sample["image"].shape), (3, 48, 64))
+            self.assertEqual(tuple(sample["heatmap"].shape), (1, 48, 64))
+            checkpoint = Path(temporary_directory) / "detector.pt"
+            training = train_ball_heatmap_detector(
+                root,
+                checkpoint,
+                image_size=(64, 48),
+                epochs=1,
+                batch_size=4,
+                channels=4,
+                device_name="cpu",
+            )
+            self.assertTrue(checkpoint.is_file())
+            self.assertEqual(training["train_images"], len(training_images))
+            detector = LearnedBallDetector.load(
+                checkpoint, device_name="cpu", confidence_threshold=0.0
+            )
+            with Image.open(root / first["images"]["camera1"]) as image:
+                detection = detector(np.asarray(image.convert("RGB")))
+            self.assertIsNotNone(detection)
 
 
 if __name__ == "__main__":

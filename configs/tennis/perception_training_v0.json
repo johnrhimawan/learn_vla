@@ -1,0 +1,23 @@
+{
+  "model": "BallHeatmapDetector",
+  "purpose": "M1 full-resolution ball-center detection before calibrated stereo triangulation",
+  "production_dataset": "tennis-flight-v0",
+  "image_size_px": [512, 384],
+  "channels": 24,
+  "epochs": 50,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "optimizer": "AdamW",
+  "loss": "balanced CenterNet-style focal heatmap loss",
+  "checkpoint_selection": "validation pixel RMSE",
+  "deployment_inputs": ["one RGB camera image"],
+  "deployment_output": "ball-center pixel and confidence",
+  "downsampling": false,
+  "reason_for_no_downsampling": "the far ball can occupy one rendered pixel",
+  "evaluation": {
+    "stereo_detection_rate_minimum": 0.99,
+    "position_rmse_m_maximum": 0.05,
+    "contact_time_prediction_rate_minimum": 0.99,
+    "contact_time_rmse_s_maximum": 0.025
+  }
+}

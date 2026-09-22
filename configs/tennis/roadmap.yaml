@@ -48,7 +48,9 @@ milestones:
       randomized_render_smoke_validation: complete
       randomized_classical_baseline_evaluation: complete
       production_randomized_render_dataset: planned
-      learned_detector_and_temporal_estimator: planned
+      learned_detector_training_pipeline: complete
+      learned_detector_production_training: planned
+      learned_temporal_estimator: planned
       spin_classification: planned
       reachable_intercept_window: planned
   - id: M2

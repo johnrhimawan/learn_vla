@@ -96,6 +96,15 @@ only to detected frames, so coverage is part of the gate and prevents that
 selective result from being treated as a pass. This measured failure is the
 training target for the learned detector and temporal estimator.
 
+The learned detector pipeline is implemented as a full-resolution pixel
+heatmap model. It deliberately avoids spatial downsampling because the ball can
+occupy one pixel in early receiving-half frames. Training uses only the train
+split, selects a checkpoint by validation pixel RMSE, and evaluates the frozen
+checkpoint through the same calibrated stereo and timing gate as the fixed
+baseline. A small smoke probe verified optimization and checkpoint loading;
+the next recorded experiment expands the number of visual domains before any
+claim about held-out performance.
+
 ### M2 — Racket control and contact
 
 Start with a stationary ball, then slow feeds, then feeds between 8 and 18 m/s.

@@ -6,12 +6,13 @@ import json
 import subprocess
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from PIL import Image
 
 from .perception import (
+    BallDetection,
     camera_ray_from_calibration,
     detect_yellow_ball,
     fit_constant_velocity_track,
@@ -81,13 +82,16 @@ def _metric_summary(
     }
 
 
-def evaluate_color_stereo_baseline(
+def evaluate_stereo_detector(
     dataset_dir: Path,
+    detector: Callable[[np.ndarray], BallDetection | None],
     *,
+    benchmark_name: str,
+    detector_source: dict[str, Any],
     prediction_lead_s: float = 0.15,
     history_frames: int = 5,
 ) -> dict[str, Any]:
-    """Score fixed yellow segmentation without accessing state during inference."""
+    """Score an image detector without accessing privileged state at inference."""
     dataset_dir = Path(dataset_dir)
     info = json.loads(
         (dataset_dir / "dataset_info.json").read_text(encoding="utf-8")
@@ -108,7 +112,7 @@ def evaluate_color_stereo_baseline(
             image = np.asarray(
                 Image.open(dataset_dir / frame["images"][camera_name]).convert("RGB")
             )
-            detection = detect_yellow_ball(image)
+            detection = detector(image)
             if detection is None:
                 break
             origin, direction = camera_ray_from_calibration(
@@ -172,8 +176,9 @@ def evaluate_color_stereo_baseline(
     contact_time_threshold = 0.025
     return {
         "schema_version": 1,
-        "benchmark": "randomized-color-stereo-baseline-v0",
+        "benchmark": benchmark_name,
         "evaluator_source": _repository_state(),
+        "detector_source": detector_source,
         "dataset": {
             "name": info["dataset"],
             "source": info["source"],
@@ -213,3 +218,20 @@ def evaluate_color_stereo_baseline(
             "the randomized gate requires both coverage and error thresholds."
         ),
     }
+
+
+def evaluate_color_stereo_baseline(
+    dataset_dir: Path,
+    *,
+    prediction_lead_s: float = 0.15,
+    history_frames: int = 5,
+) -> dict[str, Any]:
+    """Score fixed yellow segmentation without accessing state during inference."""
+    return evaluate_stereo_detector(
+        dataset_dir,
+        detect_yellow_ball,
+        benchmark_name="randomized-color-stereo-baseline-v0",
+        detector_source={"type": "fixed_rgb_ratio"},
+        prediction_lead_s=prediction_lead_s,
+        history_frames=history_frames,
+    )

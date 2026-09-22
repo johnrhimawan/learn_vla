@@ -282,6 +282,27 @@ The smoke result deliberately fails the strict M1 gate: 65.1% stereo detection
 coverage, 75% timing-prediction coverage, and 39.1 ms contact-time RMSE. This is
 the baseline the learned M1 estimator must beat.
 
+Train the full-resolution heatmap detector, then evaluate it through the same
+stereo gate:
+
+```bash
+scripts/run python examples/train_tennis_ball_detector.py \
+  /path/to/tennis-flight-v0 \
+  --checkpoint outputs/tennis-ball-detector/model.pt \
+  --report outputs/tennis-ball-detector/training.json \
+  --device cuda
+
+scripts/run python examples/evaluate_tennis_ball_detector.py \
+  /path/to/tennis-flight-v0 \
+  outputs/tennis-ball-detector/model.pt \
+  --device cuda \
+  --output outputs/tennis-ball-detector/evaluation.json
+```
+
+The detector keeps the render at full resolution because a distant tennis ball
+can occupy one pixel. Its configuration and strict coverage-aware gates are in
+[`configs/tennis/perception_training_v0.json`](configs/tennis/perception_training_v0.json).
+
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in
 [`docs/tennis_vla_plan.md`](docs/tennis_vla_plan.md). The previous
