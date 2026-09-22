@@ -105,6 +105,7 @@ def main() -> None:
         "ik_config": {
             "position_tolerance_m": ik_config.position_tolerance_m,
             "normal_tolerance_deg": ik_config.normal_tolerance_deg,
+            "joint_limit_margin_rad": ik_config.joint_limit_margin_rad,
             "restarts": ik_config.restarts,
             "maximum_iterations": ik_config.maximum_iterations,
         },

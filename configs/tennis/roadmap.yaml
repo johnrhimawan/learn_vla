@@ -63,7 +63,11 @@ milestones:
       privileged_kinematic_intercept_search: complete
       broad_feeder_kinematic_audit: complete
       reachable_feed_curriculum: complete
-      dynamically_feasible_swing_trajectory: planned
+      joint_limit_buffer: complete
+      zero_velocity_minimum_jerk_arrival: complete
+      dynamically_feasible_swing_trajectory: in_progress
+      actuator_trajectory_tracking: planned
+      nonzero_contact_velocity_planning: planned
       closed_loop_contact_execution: planned
       tennis_strike_oracle_dataset: planned
   - id: M3

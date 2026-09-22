@@ -18,6 +18,7 @@ class RacketIKConfig:
     normal_tolerance_deg: float = 5.0
     damping: float = 0.04
     normal_weight: float = 0.25
+    joint_limit_margin_rad: float = 0.03
     maximum_step_rad: float = 0.20
     maximum_iterations: int = 250
     restarts: int = 8
@@ -87,8 +88,10 @@ def solve_racket_pose(
     if model.nq < 7 or model.nv < 7:
         raise ValueError("model must contain the seven arm joints first")
 
-    joint_lower = model.jnt_range[:7, 0]
-    joint_upper = model.jnt_range[:7, 1]
+    joint_lower = model.jnt_range[:7, 0] + config.joint_limit_margin_rad
+    joint_upper = model.jnt_range[:7, 1] - config.joint_limit_margin_rad
+    if np.any(joint_lower >= joint_upper):
+        raise ValueError("joint_limit_margin_rad leaves an empty joint range")
     site_id = model.site("racket_center").id
     rng = np.random.default_rng(seed)
     initial_guesses = [home_configuration(model)]
