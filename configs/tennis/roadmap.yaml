@@ -85,7 +85,9 @@ milestones:
       active_strike_recovery_development_gate: complete
       closed_loop_contact_execution: in_progress
       active_strike_v0_heldout_gate: failed
-      active_strike_v1_expansion_development: planned
+      active_strike_v1_development_baseline: complete
+      active_strike_v1_no_plan_diagnostics: complete
+      active_strike_v1_expansion_development: in_progress
       active_strike_v1_heldout_gate: planned
       post_strike_recovery: complete
       tennis_strike_oracle_dataset: planned

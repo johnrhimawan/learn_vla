@@ -254,6 +254,16 @@ Hardware velocity, acceleration, and torque limits also remain before exporting
 `tennis-strike-oracle-v0`. Contact-phase acceleration is recorded but still has
 no hardware-derived acceptance gate.
 
+The v1 development baseline over seeds 10000–10199 finds plans for 164/200
+feeds. Every planned strike contacts, lands legally, and recovers; six exceed
+the pre-contact acceleration limit by 0.031–0.101 rad/s^2, producing 158/200
+strict passes. Of the 36 no-plan feeds, stage instrumentation assigns 14 to no
+kinematic contact pose, 18 to return templates that only hit the net or bounce
+on the robot's side, three to recovery infeasibility, and one to approach
+collision or command screening. The baseline and classification are in
+`results/tennis/active_strike_v1_development_baseline_v0.json` and
+`results/tennis/active_strike_v1_no_plan_diagnostics_v0.json`.
+
 ### M3 — Behavior-cloned visual returns
 
 Generate oracle trajectories across feed position, speed, bounce, camera,

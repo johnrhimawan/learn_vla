@@ -370,7 +370,10 @@ feeds. All 160 contacted, landed legally, and recovered, but nine violated
 controller checks; the strict pass rate was 75.5%. See the
 [`held-out report`](results/tennis/active_strike_heldout_v0.json). Those seeds
 are retired from development. M2 now needs broader stroke coverage and stronger
-execution headroom on the new development split at seeds 10000–10199.
+execution headroom on the new development split at seeds 10000–10199. Its
+baseline finds plans for 164/200 feeds and passes 158/200 strictly; see the
+[`v1 baseline`](results/tennis/active_strike_v1_development_baseline_v0.json)
+and [`no-plan diagnosis`](results/tennis/active_strike_v1_no_plan_diagnostics_v0.json).
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

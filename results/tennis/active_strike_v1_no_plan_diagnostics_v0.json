@@ -1,0 +1,995 @@
+{
+  "schema_version": 1,
+  "audit": "active-strike-v1-no-plan-diagnostics-v0",
+  "source": {
+    "git_revision": "320e92c6f3ad48080b434edb50e074b5caea1cfa",
+    "tracked_files_dirty": false
+  },
+  "baseline": "results/tennis/active_strike_v1_development_baseline_v0.json",
+  "feeds": 36,
+  "terminal_rejection_stage_counts": {
+    "kinematic_candidates": 14,
+    "coarse_legal_returns": 18,
+    "recovery_feasible": 3,
+    "approach_execution_safe": 1
+  },
+  "planning_duration_s": {
+    "minimum": 0.0009243340464308858,
+    "mean": 44.85953931948623,
+    "maximum": 129.59492958395276
+  },
+  "episodes": [
+    {
+      "seed": 10000,
+      "feed_position_m": [
+        10.275035603495693,
+        -0.07630084748356925,
+        1.4297102708925586
+      ],
+      "feed_velocity_m_s": [
+        -16.43184270278001,
+        -0.33009269497349625,
+        4.78631947115045
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 0.0009383340366184711,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10003,
+      "feed_position_m": [
+        10.532242798473897,
+        0.23812427451367835,
+        1.5992250448462968
+      ],
+      "feed_velocity_m_s": [
+        -16.49198541857426,
+        0.06352587047601022,
+        4.311854881874377
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 33.05558124999516,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10010,
+      "feed_position_m": [
+        9.688801928763665,
+        -0.45856937110242824,
+        1.4904258115788354
+      ],
+      "feed_velocity_m_s": [
+        -17.989510119956797,
+        0.45259773900046074,
+        4.362242638333258
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 65.07047708402388,
+      "diagnostics": {
+        "kinematic_candidates": 140,
+        "joint_velocity_directions": 700,
+        "impact_approach_candidates": 9975,
+        "approach_motion_feasible": 2914,
+        "approach_execution_safe": 1103,
+        "recovery_feasible": 941,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10014,
+      "feed_position_m": [
+        9.688088015726475,
+        0.36916323299684484,
+        1.3422045752243323
+      ],
+      "feed_velocity_m_s": [
+        -17.860959782174113,
+        -0.2224288036631722,
+        4.992086824145017
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 53.765585334040225,
+      "diagnostics": {
+        "kinematic_candidates": 181,
+        "joint_velocity_directions": 905,
+        "impact_approach_candidates": 10605,
+        "approach_motion_feasible": 1532,
+        "approach_execution_safe": 867,
+        "recovery_feasible": 763,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10029,
+      "feed_position_m": [
+        9.577500727649293,
+        0.47891467240650687,
+        1.2928965372467214
+      ],
+      "feed_velocity_m_s": [
+        -17.219442301607025,
+        0.3949461026189012,
+        4.3232984396225715
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.88678483408876,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10038,
+      "feed_position_m": [
+        10.802928725902463,
+        0.2535775702049804,
+        1.4555933368651728
+      ],
+      "feed_velocity_m_s": [
+        -17.480728597029135,
+        0.44730779711099944,
+        4.9294766644039765
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "recovery_feasible",
+      "planning_duration_s": 46.43781008303631,
+      "diagnostics": {
+        "kinematic_candidates": 27,
+        "joint_velocity_directions": 135,
+        "impact_approach_candidates": 2835,
+        "approach_motion_feasible": 1068,
+        "approach_execution_safe": 8,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10040,
+      "feed_position_m": [
+        10.034506979359623,
+        0.45717177344227933,
+        1.2383297042238517
+      ],
+      "feed_velocity_m_s": [
+        -16.654207685588148,
+        0.44667210227922705,
+        4.788440871459193
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.5946010829648,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10047,
+      "feed_position_m": [
+        10.400752553625235,
+        -0.4362274293263423,
+        1.291611182322611
+      ],
+      "feed_velocity_m_s": [
+        -16.364083360899564,
+        -0.29592189597190244,
+        4.6493764461697875
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 68.79925162496511,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 2141,
+        "approach_execution_safe": 1360,
+        "recovery_feasible": 818,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10064,
+      "feed_position_m": [
+        10.954749162155897,
+        0.09378217176172132,
+        1.4162329954761417
+      ],
+      "feed_velocity_m_s": [
+        -16.56578909514179,
+        -0.08276075230944402,
+        4.2417358825970455
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 67.50984429207165,
+      "diagnostics": {
+        "kinematic_candidates": 143,
+        "joint_velocity_directions": 715,
+        "impact_approach_candidates": 5250,
+        "approach_motion_feasible": 2561,
+        "approach_execution_safe": 1741,
+        "recovery_feasible": 1226,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10065,
+      "feed_position_m": [
+        9.777666722112832,
+        -0.3748073352393386,
+        1.3976695084337285
+      ],
+      "feed_velocity_m_s": [
+        -16.987476765733383,
+        -0.4788465935459768,
+        4.646837781956265
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 32.85519849997945,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10087,
+      "feed_position_m": [
+        9.803655950020183,
+        -0.1610717844398778,
+        1.5136593069281739
+      ],
+      "feed_velocity_m_s": [
+        -16.046120662569397,
+        -0.4562131041517019,
+        4.478389403497525
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.83736695803236,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10089,
+      "feed_position_m": [
+        10.513433124691181,
+        0.369345065139827,
+        1.3170403903073882
+      ],
+      "feed_velocity_m_s": [
+        -16.51781532730404,
+        0.35254013781899074,
+        4.737661034032736
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "recovery_feasible",
+      "planning_duration_s": 49.61352591600735,
+      "diagnostics": {
+        "kinematic_candidates": 35,
+        "joint_velocity_directions": 175,
+        "impact_approach_candidates": 3675,
+        "approach_motion_feasible": 1328,
+        "approach_execution_safe": 123,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10092,
+      "feed_position_m": [
+        9.555540869672031,
+        0.4144485497397514,
+        1.226723325212429
+      ],
+      "feed_velocity_m_s": [
+        -17.508496671464545,
+        0.2680320027590931,
+        4.288755415494422
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "recovery_feasible",
+      "planning_duration_s": 37.34757187496871,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 1234,
+        "approach_execution_safe": 69,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10096,
+      "feed_position_m": [
+        10.168716441306632,
+        -0.47101189471031335,
+        1.469867965015516
+      ],
+      "feed_velocity_m_s": [
+        -16.44776530555981,
+        0.4471229196797504,
+        4.210649815999127
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 65.41418316704221,
+      "diagnostics": {
+        "kinematic_candidates": 105,
+        "joint_velocity_directions": 525,
+        "impact_approach_candidates": 11025,
+        "approach_motion_feasible": 4553,
+        "approach_execution_safe": 2042,
+        "recovery_feasible": 1813,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10104,
+      "feed_position_m": [
+        10.761134603770698,
+        0.45559347166852904,
+        1.4473723920153103
+      ],
+      "feed_velocity_m_s": [
+        -16.1737169019452,
+        -0.2276131274446186,
+        4.205327689081403
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 129.59492958395276,
+      "diagnostics": {
+        "kinematic_candidates": 232,
+        "joint_velocity_directions": 1160,
+        "impact_approach_candidates": 24360,
+        "approach_motion_feasible": 9542,
+        "approach_execution_safe": 4352,
+        "recovery_feasible": 3816,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10107,
+      "feed_position_m": [
+        10.487401218010362,
+        0.15598981056670702,
+        1.209783043894891
+      ],
+      "feed_velocity_m_s": [
+        -17.219272712026736,
+        0.3726759967405797,
+        4.773050304982716
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 33.01401575002819,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10110,
+      "feed_position_m": [
+        9.75390284429378,
+        0.3109225039786919,
+        1.2785141310646635
+      ],
+      "feed_velocity_m_s": [
+        -16.5007913842809,
+        0.416544578229471,
+        4.794157542943431
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 34.85971645906102,
+      "diagnostics": {
+        "kinematic_candidates": 6,
+        "joint_velocity_directions": 30,
+        "impact_approach_candidates": 630,
+        "approach_motion_feasible": 80,
+        "approach_execution_safe": 80,
+        "recovery_feasible": 80,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10111,
+      "feed_position_m": [
+        10.276066079789553,
+        0.4443610632879724,
+        1.404579710626521
+      ],
+      "feed_velocity_m_s": [
+        -16.45406763597556,
+        -0.3321545754425348,
+        4.020339392611223
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 61.960057666990906,
+      "diagnostics": {
+        "kinematic_candidates": 168,
+        "joint_velocity_directions": 840,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 3027,
+        "approach_execution_safe": 1358,
+        "recovery_feasible": 1178,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10118,
+      "feed_position_m": [
+        10.387929828831641,
+        0.29649562815695185,
+        1.5953679451311054
+      ],
+      "feed_velocity_m_s": [
+        -17.230801948857625,
+        0.34598076975343717,
+        4.480883519539139
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 57.59154295793269,
+      "diagnostics": {
+        "kinematic_candidates": 62,
+        "joint_velocity_directions": 310,
+        "impact_approach_candidates": 6510,
+        "approach_motion_feasible": 2580,
+        "approach_execution_safe": 610,
+        "recovery_feasible": 604,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10121,
+      "feed_position_m": [
+        10.595175997023848,
+        0.490362595160751,
+        1.4139151424973886
+      ],
+      "feed_velocity_m_s": [
+        -17.25563818141159,
+        0.37517535412122427,
+        4.71657834900626
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 32.884366250014864,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10123,
+      "feed_position_m": [
+        10.007200640881788,
+        -0.44257160988660715,
+        1.2324536848106893
+      ],
+      "feed_velocity_m_s": [
+        -16.208276327070223,
+        -0.39214941290485594,
+        4.9342609277290945
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.580534582957625,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10128,
+      "feed_position_m": [
+        9.962439825100917,
+        0.4586367904619131,
+        1.2690249270539866
+      ],
+      "feed_velocity_m_s": [
+        -17.329367495766597,
+        0.3964550471770367,
+        4.739951054781206
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.72044974996243,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10140,
+      "feed_position_m": [
+        9.969068928332398,
+        -0.3093027696536276,
+        1.5063277258393863
+      ],
+      "feed_velocity_m_s": [
+        -17.30306417899899,
+        -0.40865186987473967,
+        4.287416852956384
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 43.85667879099492,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10153,
+      "feed_position_m": [
+        10.65473097474746,
+        -0.2746235816615896,
+        1.2648751008671693
+      ],
+      "feed_velocity_m_s": [
+        -16.237354514148294,
+        -0.3430549673874931,
+        4.589034391702753
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 72.19065412506461,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 2846,
+        "approach_execution_safe": 1789,
+        "recovery_feasible": 1508,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10158,
+      "feed_position_m": [
+        9.927545488285766,
+        0.49455442488509627,
+        1.5460693003145634
+      ],
+      "feed_velocity_m_s": [
+        -17.47075680555732,
+        0.2674185644668077,
+        4.534760343355467
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "approach_execution_safe",
+      "planning_duration_s": 33.294496291084215,
+      "diagnostics": {
+        "kinematic_candidates": 34,
+        "joint_velocity_directions": 170,
+        "impact_approach_candidates": 3570,
+        "approach_motion_feasible": 1277,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10162,
+      "feed_position_m": [
+        10.316595803370097,
+        0.047400589933989545,
+        1.4077194888177273
+      ],
+      "feed_velocity_m_s": [
+        -16.684345515089856,
+        -0.4366679768974929,
+        4.580581907374182
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 34.22433470899705,
+      "diagnostics": {
+        "kinematic_candidates": 3,
+        "joint_velocity_directions": 15,
+        "impact_approach_candidates": 315,
+        "approach_motion_feasible": 154,
+        "approach_execution_safe": 82,
+        "recovery_feasible": 36,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10166,
+      "feed_position_m": [
+        10.462986564593974,
+        0.4934251765244796,
+        1.3365201633520962
+      ],
+      "feed_velocity_m_s": [
+        -17.064832790558775,
+        0.19604313908632864,
+        4.088813178810785
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 49.04647379205562,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 2120,
+        "approach_execution_safe": 835,
+        "recovery_feasible": 509,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10169,
+      "feed_position_m": [
+        10.05532868909458,
+        -0.1747652596859648,
+        1.3461128014481778
+      ],
+      "feed_velocity_m_s": [
+        -16.46385229912144,
+        -0.11036809093183786,
+        4.338892699091943
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 11.078089416027069,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10179,
+      "feed_position_m": [
+        10.582622750939102,
+        0.1730952891014269,
+        1.3945403122790163
+      ],
+      "feed_velocity_m_s": [
+        -17.11759051572472,
+        0.3897172675801326,
+        4.058486997286457
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 49.50578804104589,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 1755,
+        "approach_execution_safe": 889,
+        "recovery_feasible": 671,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10184,
+      "feed_position_m": [
+        10.011544656768065,
+        0.26244098532401683,
+        1.5547718443190697
+      ],
+      "feed_velocity_m_s": [
+        -16.458425713405035,
+        -0.4535063908452077,
+        4.826434716958154
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 38.60693066706881,
+      "diagnostics": {
+        "kinematic_candidates": 14,
+        "joint_velocity_directions": 70,
+        "impact_approach_candidates": 1470,
+        "approach_motion_feasible": 555,
+        "approach_execution_safe": 296,
+        "recovery_feasible": 190,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10186,
+      "feed_position_m": [
+        9.805324849069232,
+        -0.4234152745847197,
+        1.2883331965664324
+      ],
+      "feed_velocity_m_s": [
+        -16.709083795261318,
+        -0.4321983882655356,
+        4.816367956516106
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 32.584759666002356,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10188,
+      "feed_position_m": [
+        10.895674438005328,
+        -0.1726960439148174,
+        1.2978739818103182
+      ],
+      "feed_velocity_m_s": [
+        -17.20695728695142,
+        -0.44256175444788337,
+        4.168100210104297
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 44.06009774992708,
+      "diagnostics": {
+        "kinematic_candidates": 65,
+        "joint_velocity_directions": 325,
+        "impact_approach_candidates": 6825,
+        "approach_motion_feasible": 1759,
+        "approach_execution_safe": 1009,
+        "recovery_feasible": 973,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10189,
+      "feed_position_m": [
+        10.80202379007346,
+        -0.0800357525924098,
+        1.2271987333984895
+      ],
+      "feed_velocity_m_s": [
+        -16.961340024377762,
+        -0.06533879481873672,
+        4.0749354883880535
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 44.410691750003025,
+      "diagnostics": {
+        "kinematic_candidates": 130,
+        "joint_velocity_directions": 650,
+        "impact_approach_candidates": 13650,
+        "approach_motion_feasible": 3863,
+        "approach_execution_safe": 1115,
+        "recovery_feasible": 730,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10190,
+      "feed_position_m": [
+        10.574088795980696,
+        0.4205723969934331,
+        1.4561633398261693
+      ],
+      "feed_velocity_m_s": [
+        -16.29735282663748,
+        0.3564978067268598,
+        4.018916709256232
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 29.18343812506646,
+      "diagnostics": {
+        "kinematic_candidates": 13,
+        "joint_velocity_directions": 65,
+        "impact_approach_candidates": 1365,
+        "approach_motion_feasible": 400,
+        "approach_execution_safe": 380,
+        "recovery_feasible": 334,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10193,
+      "feed_position_m": [
+        10.962122807219965,
+        0.23435747664393536,
+        1.446665879911387
+      ],
+      "feed_velocity_m_s": [
+        -16.48451261991256,
+        -0.13306201081439673,
+        4.489221205088052
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "coarse_legal_returns",
+      "planning_duration_s": 44.5057247079676,
+      "diagnostics": {
+        "kinematic_candidates": 100,
+        "joint_velocity_directions": 500,
+        "impact_approach_candidates": 10500,
+        "approach_motion_feasible": 3823,
+        "approach_execution_safe": 1912,
+        "recovery_feasible": 1812,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    },
+    {
+      "seed": 10194,
+      "feed_position_m": [
+        10.607359972343753,
+        -0.4289958587771705,
+        1.5393034459895996
+      ],
+      "feed_velocity_m_s": [
+        -17.108563222399845,
+        0.39477264496492614,
+        4.005512663957767
+      ],
+      "plans": 0,
+      "terminal_rejection_stage": "kinematic_candidates",
+      "planning_duration_s": 0.0009243340464308858,
+      "diagnostics": {
+        "kinematic_candidates": 0,
+        "joint_velocity_directions": 0,
+        "impact_approach_candidates": 0,
+        "approach_motion_feasible": 0,
+        "approach_execution_safe": 0,
+        "recovery_feasible": 0,
+        "coarse_legal_returns": 0,
+        "full_legal_returns": 0,
+        "used_alternative_ik_search": true
+      }
+    }
+  ]
+}
