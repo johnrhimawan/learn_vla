@@ -2,8 +2,8 @@
   "schema_version": 1,
   "audit": "phase-one-contact-curriculum-kinematic-v0",
   "source": {
-    "git_revision": "23c8b7e62224ddb569abe26b52c350455513ce76",
-    "tracked_files_dirty": false
+    "git_revision": "cb601618f1a796832c696289554465a73efdb9d1",
+    "tracked_files_dirty": true
   },
   "envelope": {
     "source_x_m": [
@@ -34,6 +34,7 @@
   "ik_config": {
     "position_tolerance_m": 0.015,
     "normal_tolerance_deg": 5.0,
+    "joint_limit_margin_rad": 0.03,
     "restarts": 4,
     "maximum_iterations": 180
   },
@@ -58,7 +59,7 @@
           0.1762677125397444
         ],
         "maximum": [
-          -9.503413209113976,
+          -9.516757500639109,
           0.919095257958822,
           1.195640028746415
         ]
@@ -67,11 +68,12 @@
     "validation": {
       "seed_start": 8000,
       "feeds": 200,
-      "reachable": 194,
-      "reachable_fraction": 0.97,
+      "reachable": 193,
+      "reachable_fraction": 0.965,
       "failed_seeds": [
         8046,
         8091,
+        8139,
         8165,
         8169,
         8179,
@@ -81,7 +83,7 @@
         "minimum": [
           -10.071499969531363,
           -1.0205891850119273,
-          0.32100632467166146
+          0.16950387952615864
         ],
         "maximum": [
           -9.534440076523362,
@@ -93,10 +95,11 @@
     "test": {
       "seed_start": 9000,
       "feeds": 200,
-      "reachable": 197,
-      "reachable_fraction": 0.985,
+      "reachable": 196,
+      "reachable_fraction": 0.98,
       "failed_seeds": [
         9055,
+        9058,
         9144,
         9161
       ],
@@ -115,16 +118,16 @@
     }
   },
   "total_feeds": 600,
-  "total_reachable": 585,
-  "reachable_fraction": 0.975,
+  "total_reachable": 583,
+  "reachable_fraction": 0.9716666666666667,
   "first_intercept_bounds_m": {
     "minimum": [
       -10.086585207067012,
       -1.0205891850119273,
-      0.1762677125397444
+      0.16950387952615864
     ],
     "maximum": [
-      -9.503413209113976,
+      -9.516757500639109,
       1.088300811887076,
       1.2108186350899333
     ]

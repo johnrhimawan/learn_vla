@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "audit": "phase-one-contact-minimum-jerk-arrival-v0",
+  "source": {
+    "git_revision": "cb601618f1a796832c696289554465a73efdb9d1",
+    "tracked_files_dirty": true
+  },
+  "planning_start": {
+    "time_s": 0.0,
+    "event": "programmable feeder launch trigger"
+  },
+  "trajectory": {
+    "type": "quintic minimum jerk",
+    "initial_velocity_rad_s": 0.0,
+    "terminal_velocity_rad_s": 0.0,
+    "initial_acceleration_rad_s2": 0.0,
+    "terminal_acceleration_rad_s2": 0.0
+  },
+  "simulation_joint_motion_limits": {
+    "maximum_speed_rad_s": 4.0,
+    "maximum_acceleration_rad_s2": 15.0,
+    "minimum_joint_limit_margin_rad": 0.03,
+    "authority": "project simulation contract; not hardware ratings"
+  },
+  "ik_config": {
+    "position_tolerance_m": 0.015,
+    "normal_tolerance_deg": 5.0,
+    "joint_limit_margin_rad": 0.03,
+    "restarts": 4,
+    "maximum_iterations": 180
+  },
+  "splits": {
+    "train": {
+      "seed_start": 0,
+      "feeds": 200,
+      "kinematically_reachable": 194,
+      "kinematically_reachable_fraction": 0.97,
+      "dynamically_feasible": 194,
+      "dynamically_feasible_fraction": 0.97,
+      "kinematically_unreachable_seeds": [
+        25,
+        68,
+        79,
+        91,
+        92,
+        144
+      ],
+      "dynamically_infeasible_seeds": [],
+      "infeasible_candidate_reason_counts": {},
+      "selected_intercept_bounds_m": {
+        "minimum": [
+          -10.035406592554283,
+          -0.8967947696795031,
+          0.1762677125397444
+        ],
+        "maximum": [
+          -9.516757500639109,
+          0.919095257958822,
+          1.195640028746415
+        ]
+      },
+      "arrival_duration_s": {
+        "minimum": 1.344,
+        "median": 1.6655,
+        "p95": 1.9120000000000001,
+        "maximum": 1.968
+      },
+      "maximum_joint_speed_rad_s": {
+        "minimum": 1.8808551495265595,
+        "median": 2.564121244147227,
+        "p95": 3.2283009378758933,
+        "maximum": 3.95625750728022
+      },
+      "maximum_joint_acceleration_rad_s2": {
+        "minimum": 3.170780866956108,
+        "median": 4.721434801449613,
+        "p95": 6.851701135945422,
+        "maximum": 8.944283257216693
+      },
+      "minimum_joint_limit_margin_rad": {
+        "minimum": 0.029999999999999805,
+        "median": 0.1466742857738077,
+        "p95": 0.6715005685159876,
+        "maximum": 0.8638999999999997
+      }
+    },
+    "validation": {
+      "seed_start": 8000,
+      "feeds": 200,
+      "kinematically_reachable": 193,
+      "kinematically_reachable_fraction": 0.965,
+      "dynamically_feasible": 193,
+      "dynamically_feasible_fraction": 0.965,
+      "kinematically_unreachable_seeds": [
+        8046,
+        8091,
+        8139,
+        8165,
+        8169,
+        8179,
+        8186
+      ],
+      "dynamically_infeasible_seeds": [],
+      "infeasible_candidate_reason_counts": {},
+      "selected_intercept_bounds_m": {
+        "minimum": [
+          -10.071499969531363,
+          -1.0205891850119273,
+          0.16950387952615864
+        ],
+        "maximum": [
+          -9.534440076523362,
+          0.8968961109270235,
+          1.2108186350899333
+        ]
+      },
+      "arrival_duration_s": {
+        "minimum": 1.36,
+        "median": 1.655,
+        "p95": 1.8725999999999998,
+        "maximum": 1.967
+      },
+      "maximum_joint_speed_rad_s": {
+        "minimum": 1.838644191106274,
+        "median": 2.5152422166244466,
+        "p95": 3.416084188187221,
+        "maximum": 3.9537219023187675
+      },
+      "maximum_joint_acceleration_rad_s2": {
+        "minimum": 3.274945547895244,
+        "median": 4.740982984233611,
+        "p95": 6.946649024879112,
+        "maximum": 8.745909596186436
+      },
+      "minimum_joint_limit_margin_rad": {
+        "minimum": 0.029999999999999805,
+        "median": 0.12821792678245458,
+        "p95": 0.6138497814686036,
+        "maximum": 0.7342814761663217
+      }
+    },
+    "test": {
+      "seed_start": 9000,
+      "feeds": 200,
+      "kinematically_reachable": 196,
+      "kinematically_reachable_fraction": 0.98,
+      "dynamically_feasible": 193,
+      "dynamically_feasible_fraction": 0.965,
+      "kinematically_unreachable_seeds": [
+        9055,
+        9058,
+        9144,
+        9161
+      ],
+      "dynamically_infeasible_seeds": [
+        9102,
+        9135,
+        9196
+      ],
+      "infeasible_candidate_reason_counts": {
+        "joint_speed": 3
+      },
+      "selected_intercept_bounds_m": {
+        "minimum": [
+          -10.07704589677601,
+          -0.9527011594723555,
+          0.18254399106551675
+        ],
+        "maximum": [
+          -9.53438818300309,
+          1.0491879653632907,
+          1.208894614479318
+        ]
+      },
+      "arrival_duration_s": {
+        "minimum": 1.377,
+        "median": 1.6460000000000001,
+        "p95": 1.8978,
+        "maximum": 1.966
+      },
+      "maximum_joint_speed_rad_s": {
+        "minimum": 1.8570460478376398,
+        "median": 2.5490397188019287,
+        "p95": 3.3311323129386805,
+        "maximum": 3.9209727888616426
+      },
+      "maximum_joint_acceleration_rad_s2": {
+        "minimum": 3.0480910749583283,
+        "median": 4.782588552180343,
+        "p95": 6.556172042947519,
+        "maximum": 8.692199453360084
+      },
+      "minimum_joint_limit_margin_rad": {
+        "minimum": 0.029999999999999805,
+        "median": 0.18111666914220503,
+        "p95": 0.545227956089462,
+        "maximum": 0.7424185755624086
+      }
+    }
+  },
+  "gate": {
+    "minimum_test_dynamically_feasible_fraction": 0.95,
+    "test_pass": true
+  },
+  "limitations": [
+    "The oracle plans from the known feeder trigger with privileged ball state.",
+    "The trajectory arrives with zero racket velocity; an active strike is not yet planned.",
+    "Analytical speed and acceleration checks do not prove actuator tracking.",
+    "Self-collision, ball contact, and outgoing-ball placement are not evaluated.",
+    "The simulation limits must be replaced by authoritative hardware limits before transfer."
+  ]
+}
