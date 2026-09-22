@@ -1,7 +1,7 @@
 [project]
-name = "learn-vla"
+name = "tennis-vla"
 version = "0.1.0"
-description = "Hands-on LeRobot and MuJoCo examples for learning vision-language-action robotics"
+description = "A MuJoCo tennis simulation and staged vision-language-action training project"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

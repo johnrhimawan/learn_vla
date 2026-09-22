@@ -1,8 +1,0 @@
-#!/bin/sh
-set -eu
-CONTROLLER=${1:-smolvla-base}
-shift || true
-exec "$(dirname "$0")/run" python -m vla_rl.evaluate \
-  --controller "$CONTROLLER" \
-  --output "results/baselines/${CONTROLLER}_obstacle_reach_v0.json" \
-  "$@"
