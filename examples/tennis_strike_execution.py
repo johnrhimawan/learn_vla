@@ -19,6 +19,7 @@ from tennis_vla.execution import (
     StrikeExecutionConfig,
     audit_court_bounce,
     execute_strike,
+    simulate_mujoco_ball_flight,
 )
 from tennis_vla.strike import plan_safe_center_strikes
 
@@ -58,7 +59,12 @@ def main() -> None:
     args = parser.parse_args()
 
     model = make_tennis_contact_model()
-    flight = simulate_ball_flight(
+    analytical_flight = simulate_ball_flight(
+        CANONICAL_POSITION_M,
+        CANONICAL_VELOCITY_M_S,
+    )
+    flight = simulate_mujoco_ball_flight(
+        model,
         CANONICAL_POSITION_M,
         CANONICAL_VELOCITY_M_S,
     )
@@ -86,6 +92,10 @@ def main() -> None:
         "incoming_feed": {
             "position_m": CANONICAL_POSITION_M.tolist(),
             "velocity_m_s": CANONICAL_VELOCITY_M_S.tolist(),
+            "analytical_first_bounce_m": (
+                analytical_flight.first_bounce_m.tolist()
+            ),
+            "mujoco_first_bounce_m": flight.first_bounce_m.tolist(),
         },
         "controller": asdict(execution_config),
         "court_bounce_calibration": bounce.metrics(),

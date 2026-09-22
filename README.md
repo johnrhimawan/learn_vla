@@ -326,6 +326,9 @@ scripts/run python examples/tennis_intercept_audit.py
 scripts/run python examples/tennis_contact_curriculum_audit.py
 scripts/run python examples/tennis_dynamic_intercept_audit.py
 scripts/run python examples/tennis_arrival_tracking_audit.py
+scripts/run python examples/tennis_strike_oracle.py
+scripts/run python examples/tennis_strike_execution.py
+scripts/run python examples/tennis_active_strike_audit.py --count 20 --workers 4
 ```
 
 The perception plane at x=-9.25 m is an advance timing reference. It is outside
@@ -351,8 +354,17 @@ feedforward. It passes 190 of 200 held-out feeds (95.0%) while checking actual
 motion limits, final pose error, joint margin, clipped commands, and unexpected
 contacts. See
 [`results/tennis/arrival_tracking_audit_v0.json`](results/tennis/arrival_tracking_audit_v0.json).
-The ball is parked for this audit and the trajectory ends at zero velocity, so
-active strike planning and executed ball contact remain M2 work.
+That arrival audit parks the ball and ends at zero velocity.
+
+The active-strike planner adds nonzero three-dimensional racket velocity,
+multi-branch IK, collision and command screening through contact, and a
+calibrated MuJoCo post-bounce flight oracle. On the 20-seed development prefix,
+all 20 planned, contacted the live ball, cleared the net, landed legally, and
+passed the controller checks. Median contact-time error is 2.0 ms and
+median contact-position error is 1.78 cm. See the
+[`development report`](results/tennis/active_strike_development_v0.json).
+The untouched 200-feed gate at seeds 12000–12199 and post-strike recovery remain
+M2 work.
 
 The milestone plan, control architecture, datasets, RL stages, Mac/H200 split,
 and quantitative exit gates are in

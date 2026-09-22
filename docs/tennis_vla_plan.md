@@ -212,11 +212,30 @@ m and bounces legally at x=2.122 m. There are no clipped controls or unexpected
 contacts. The execution report is
 `results/tennis/canonical_strike_execution_v0.json`.
 
-This closes the single canonical active-strike checkpoint. It does not close
-M2: the 47.7 rad/s^2 contact-phase acceleration peak lacks a hardware-derived
-gate, the trajectory has no recovery segment, and the held-out feeder envelope
-has not executed active contacts. Those are the next controller tasks before
-exporting `tennis-strike-oracle-v0`.
+The active-strike development planner extends the action from normal racket
+speed to a three-dimensional velocity with a vertical tangential component.
+It evaluates multiple redundant IK branches, prefers plans with motion-limit
+headroom, and rejects collisions or compensated commands that would clip during
+the approach and 50 ms contact continuation. Most critically, its privileged
+contact-state prediction now rolls the ball through the calibrated MuJoCo
+court contact. The independent analytical flight remains a calibration check;
+it is no longer assumed exact after the bounce.
+
+On the 20-seed test-development prefix, all 20 feeds produce a safe plan, live
+ball-racket contact, and a legal return. Every strict execution check passes.
+Median contact-time error is 2.0 ms, median contact-position error is 1.78 cm,
+median outgoing-velocity model error is 0.925 m/s, and the 95th-percentile
+maximum joint-tracking error is 0.00945 rad. The minimum measured net clearance
+is 1.835 m. The clean evidence is
+`results/tennis/active_strike_development_v0.json`.
+
+This completes the 20-feed development gate, not M2. Because those seeds drove
+planner corrections, the final active-strike test is reserved at seeds
+12000–12199. That untouched 200-feed audit, a bounded recovery trajectory after
+separation, and hardware velocity, acceleration, and torque limits remain
+before exporting `tennis-strike-oracle-v0`. Contact-phase acceleration is
+recorded but still has
+no hardware-derived acceptance gate.
 
 ### M3 — Behavior-cloned visual returns
 
@@ -342,8 +361,8 @@ adapted only through a versioned action schema.
 7. Add calibrated spin and string-bed response.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
    **Buffered floor-safe IK, zero-velocity minimum-jerk arrival, 250 Hz arrival
-   tracking, and one canonical live active strike are implemented; held-out
-   active-contact execution, recovery motion, and dataset export remain.**
+   tracking, and a 20-feed live active-strike development gate are implemented;
+   the 200-feed held-out audit, recovery motion, and dataset export remain.**
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 

@@ -21,6 +21,10 @@ control_stack:
     - racket_velocity
     - landing_target
 
+evaluation_splits:
+  active_strike_development_seeds: [9000, 9019]
+  active_strike_final_heldout_seeds: [12000, 12199]
+
 milestones:
   - id: M0
     name: court_and_ball_physics
@@ -73,8 +77,12 @@ milestones:
       nonzero_contact_velocity_planning: in_progress
       canonical_active_strike_plan: complete
       canonical_active_strike_execution: complete
+      calibrated_mujoco_flight_oracle: complete
+      active_strike_collision_screening: complete
+      active_strike_development_gate: complete
       closed_loop_contact_execution: in_progress
-      heldout_active_strike_execution: planned
+      heldout_active_strike_execution: in_progress
+      post_strike_recovery: planned
       tennis_strike_oracle_dataset: planned
   - id: M3
     name: behavior_cloned_returns
