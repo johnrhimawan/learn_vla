@@ -34,6 +34,7 @@ milestones:
       first_order_racket_impact: complete
       pinned_7dof_reference_arm: complete
       integrated_mujoco_racket_contact: complete
+      canonical_no_spin_court_contact_calibration: complete
       calibrated_spin_and_string_response: planned
   - id: M1
     name: vision_ball_tracking
@@ -70,8 +71,10 @@ milestones:
       dynamically_feasible_swing_trajectory: in_progress
       actuator_trajectory_tracking: complete
       nonzero_contact_velocity_planning: in_progress
-      canonical_active_strike_plan: in_progress
-      closed_loop_contact_execution: planned
+      canonical_active_strike_plan: complete
+      canonical_active_strike_execution: complete
+      closed_loop_contact_execution: in_progress
+      heldout_active_strike_execution: planned
       tennis_strike_oracle_dataset: planned
   - id: M3
     name: behavior_cloned_returns

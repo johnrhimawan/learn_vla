@@ -32,6 +32,15 @@ COURT_LINE_GEOMS = (
     "center_service_line",
 )
 
+# Canonical no-spin court calibration.  Direct-format ``solref`` keeps the
+# compliant contact model explicit: the first value is negative stiffness and
+# the second is negative damping.  These values reproduce the analytical v0
+# bounce for the canonical feed without changing the separately calibrated
+# ball-racket pair.
+COURT_CONTACT_SOLREF = (-1_000_000.0, -230.0)
+COURT_CONTACT_SOLIMP = (0.945, 0.9745, 0.001, 0.5, 2.0)
+COURT_CONTACT_FRICTION = (2.1, 2.1, 0.02, 0.002, 0.002)
+
 
 @dataclass(frozen=True)
 class RacketContactProbe:
@@ -166,6 +175,15 @@ def make_tennis_contact_model(
         condim=4,
         contype=1,
         conaffinity=1,
+    )
+    spec.add_pair(
+        name="ball_court_contact",
+        geomname1="tennis_ball_geom",
+        geomname2="tennis_court",
+        condim=4,
+        solref=list(COURT_CONTACT_SOLREF),
+        solimp=list(COURT_CONTACT_SOLIMP),
+        friction=list(COURT_CONTACT_FRICTION),
     )
     spec.add_pair(
         name="ball_racket_contact",

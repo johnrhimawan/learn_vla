@@ -187,11 +187,36 @@ acceleration are 3.14 rad/s and 8.71 rad/s^2. The report is
 
 These trajectories end at zero joint velocity, and the tracking audit parks the
 ball away from the arm. The result validates collision-aware arrival control,
-but it is not yet an active tennis swing or a contact-rate result. M2 still
-needs a nonzero contact-velocity trajectory, executed ball-racket contact, and
-outgoing-ball placement. The project motion limits are simulation assumptions;
-the reported feedforward torque has no acceptance gate because the reference
-MJCF lacks authoritative actuator limits.
+but it is not an active tennis swing or a contact-rate result. The project
+motion limits are simulation assumptions; the reported feedforward torque has
+no acceptance gate because the reference MJCF lacks authoritative actuator
+limits.
+
+The canonical active-strike checkpoint adds a quintic trajectory with nonzero
+terminal joint velocity. It searches racket-face pitch and normal speed, solves
+the redundant racket-velocity Jacobian with a deterministic minimum-infinity
+norm solution, and rejects trajectories that exceed the existing speed,
+acceleration, or joint-margin gates. For the center feed at `[10.5, 0, 1.4]` m
+and `[-17.75, 0, 4.6]` m/s, it selects a 2.1 m/s racket-normal speed and predicts
+a legal return. The clean analytical report is
+`results/tennis/canonical_strike_plan_v0.json`.
+
+The same strike now runs against the live MuJoCo ball. An explicit ball-court
+contact pair matches the analytical canonical bounce at separation within 3 ms,
+2.8 cm, and 0.153 m/s. A 250 Hz trajectory reference is interpolated by a 1 kHz
+inverse-dynamics and feedback loop. It contacts the ball 2 ms before the planned
+time, separates 10 ms later, stays within 0.0087 rad maximum joint-tracking
+error, and produces a measured outgoing velocity of `[8.766, 0.016, 7.332]`
+m/s. Analytical continuation from that measured state clears the net by 1.129
+m and bounces legally at x=2.122 m. There are no clipped controls or unexpected
+contacts. The execution report is
+`results/tennis/canonical_strike_execution_v0.json`.
+
+This closes the single canonical active-strike checkpoint. It does not close
+M2: the 47.7 rad/s^2 contact-phase acceleration peak lacks a hardware-derived
+gate, the trajectory has no recovery segment, and the held-out feeder envelope
+has not executed active contacts. Those are the next controller tasks before
+exporting `tennis-strike-oracle-v0`.
 
 ### M3 — Behavior-cloned visual returns
 
@@ -316,9 +341,9 @@ adapted only through a versioned action schema.
    validator are implemented; production generation and learning remain.**
 7. Add calibrated spin and string-bed response.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
-   **Buffered floor-safe IK, zero-velocity minimum-jerk arrival, and 250 Hz
-   actuator tracking are implemented; active strike velocity, executed contact,
-   and dataset export remain.**
+   **Buffered floor-safe IK, zero-velocity minimum-jerk arrival, 250 Hz arrival
+   tracking, and one canonical live active strike are implemented; held-out
+   active-contact execution, recovery motion, and dataset export remain.**
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
@@ -326,6 +351,7 @@ The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
 - [2026 ITF Rules of Tennis](https://www.itftennis.com/media/7221/2026-rules-of-tennis-english.pdf)
 - [MuJoCo force callbacks](https://mujoco.readthedocs.io/en/latest/APIreference/APIglobals.html)
+- [MuJoCo contact parameters](https://mujoco.readthedocs.io/en/latest/modeling.html#solver-parameters)
 - [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie)
 - [LeRobot SmolVLA guide](https://huggingface.co/docs/lerobot/smolvla)
 - [LeRobot HIL-SERL actor/learner workflow](https://huggingface.co/docs/lerobot/main/hilserl)
