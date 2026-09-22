@@ -5,7 +5,12 @@ import unittest
 import mujoco
 import numpy as np
 
-from tennis_vla.arm import audit_workspace, home_configuration, make_sawyer_racket_model
+from tennis_vla.arm import (
+    audit_workspace,
+    home_configuration,
+    make_sawyer_racket_model,
+    tennis_ready_configuration,
+)
 from tennis_vla.environment import make_tennis_contact_model, probe_stationary_racket_contact
 
 
@@ -35,6 +40,12 @@ class TennisArmTests(unittest.TestCase):
         self.assertEqual(first["arm"], second["arm"])
         self.assertEqual(first["racket_center_bounds_m"], second["racket_center_bounds_m"])
         self.assertEqual(first["radial_reach_m"], second["radial_reach_m"])
+
+    def test_tennis_ready_pose_has_no_self_contact(self) -> None:
+        data = mujoco.MjData(self.model)
+        data.qpos[:] = tennis_ready_configuration(self.model)
+        mujoco.mj_forward(self.model, data)
+        self.assertEqual(data.ncon, 0)
 
     def test_integrated_contact_scene_schema(self) -> None:
         model = make_tennis_contact_model()

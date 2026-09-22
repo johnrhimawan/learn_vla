@@ -8,7 +8,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import home_configuration
+from .arm import tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult
 
 
@@ -94,7 +94,7 @@ def solve_racket_pose(
         raise ValueError("joint_limit_margin_rad leaves an empty joint range")
     site_id = model.site("racket_center").id
     rng = np.random.default_rng(seed)
-    initial_guesses = [home_configuration(model)]
+    initial_guesses = [tennis_ready_configuration(model)]
     initial_guesses.extend(
         rng.uniform(joint_lower, joint_upper) for _ in range(config.restarts - 1)
     )
@@ -221,7 +221,7 @@ def find_kinematic_intercepts(
         if not (
             -10.1 <= ball_position[0] <= -9.45
             and abs(ball_position[1]) <= 1.1
-            and 0.15 <= ball_position[2] <= 1.35
+            and 0.60 <= ball_position[2] <= 1.35
         ):
             continue
         racket_target = ball_position - contact_offset_m * normal

@@ -5,7 +5,7 @@ import unittest
 import mujoco
 import numpy as np
 
-from tennis_vla.arm import home_configuration
+from tennis_vla.arm import tennis_ready_configuration
 from tennis_vla.environment import make_tennis_contact_model
 from tennis_vla.feeder import ProgrammableFeeder
 from tennis_vla.intercept import find_kinematic_intercepts, solve_racket_pose
@@ -18,7 +18,7 @@ class TennisInterceptTests(unittest.TestCase):
 
     def test_solver_recovers_a_known_forward_kinematics_pose(self) -> None:
         data = mujoco.MjData(self.model)
-        data.qpos[:7] = home_configuration(self.model)
+        data.qpos[:7] = tennis_ready_configuration(self.model)
         mujoco.mj_forward(self.model, data)
         site = self.model.site("racket_center").id
         target_position = data.site_xpos[site].copy()
@@ -50,6 +50,7 @@ class TennisInterceptTests(unittest.TestCase):
             self.assertLessEqual(candidate.solution.normal_error_deg, 5.0)
             self.assertGreater(candidate.ball_position_m[0], -10.1)
             self.assertLess(candidate.ball_position_m[0], -9.45)
+            self.assertGreaterEqual(candidate.ball_position_m[2], 0.60)
 
     def test_reference_plane_is_not_assumed_to_be_the_contact_pose(self) -> None:
         unreachable = solve_racket_pose(

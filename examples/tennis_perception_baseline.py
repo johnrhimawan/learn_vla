@@ -16,7 +16,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.arm import home_configuration
+from tennis_vla.arm import tennis_ready_configuration
 from tennis_vla.environment import make_tennis_contact_model
 from tennis_vla.feeder import ProgrammableFeeder
 from tennis_vla.perception import (
@@ -60,7 +60,7 @@ def run_benchmark(
 
     model = make_tennis_contact_model()
     data = mujoco.MjData(model)
-    data.qpos[:7] = home_configuration(model)
+    data.qpos[:7] = tennis_ready_configuration(model)
     data.ctrl[:] = data.qpos[:7]
     ball_qpos_address = int(model.joint("ball_free").qposadr[0])
     renderer = mujoco.Renderer(model, height=height, width=width)

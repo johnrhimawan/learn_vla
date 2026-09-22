@@ -12,6 +12,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tennis_vla.arm import tennis_ready_configuration
 from tennis_vla.environment import make_tennis_contact_model
 from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
 from tennis_vla.intercept import RacketIKConfig
@@ -134,6 +135,7 @@ def main() -> None:
             "time_s": 0.0,
             "event": "programmable feeder launch trigger",
         },
+        "start_joint_positions_rad": tennis_ready_configuration(model).tolist(),
         "trajectory": {
             "type": "quintic minimum jerk",
             "initial_velocity_rad_s": 0.0,

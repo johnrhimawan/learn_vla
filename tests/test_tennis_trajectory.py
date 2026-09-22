@@ -13,6 +13,7 @@ from tennis_vla.trajectory import (
     earliest_feasible_arrival,
     plan_intercept_arrivals,
     sample_minimum_jerk,
+    track_intercept_arrival,
 )
 
 
@@ -63,6 +64,13 @@ class TennisTrajectoryTests(unittest.TestCase):
         self.assertGreaterEqual(selected.minimum_joint_limit_margin_rad, 0.03)
         self.assertLessEqual(selected.maximum_joint_speed_rad_s, 4.0)
         self.assertLessEqual(selected.maximum_joint_acceleration_rad_s2, 15.0)
+
+        tracking = track_intercept_arrival(self.model, selected)
+        self.assertTrue(tracking.passed, tracking.failure_reasons)
+        self.assertLess(tracking.final_joint_tracking_error_rad, 0.01)
+        self.assertLess(tracking.racket_position_tracking_error_m, 0.01)
+        self.assertLess(tracking.racket_normal_tracking_error_deg, 1.0)
+        self.assertEqual(tracking.unexpected_contact_steps, 0)
 
 
 if __name__ == "__main__":

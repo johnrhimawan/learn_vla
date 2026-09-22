@@ -5,7 +5,7 @@ import unittest
 import mujoco
 import numpy as np
 
-from tennis_vla.arm import home_configuration
+from tennis_vla.arm import tennis_ready_configuration
 from tennis_vla.environment import make_tennis_contact_model
 from tennis_vla.perception import (
     BallTrackEstimate,
@@ -59,7 +59,7 @@ class TennisPerceptionTests(unittest.TestCase):
     def test_rendered_stereo_pair_recovers_ball_position(self) -> None:
         model = make_tennis_contact_model()
         data = mujoco.MjData(model)
-        data.qpos[:7] = home_configuration(model)
+        data.qpos[:7] = tennis_ready_configuration(model)
         data.ctrl[:] = data.qpos[:7]
         expected = np.array([-7.0, 0.4, 1.3])
         qpos_address = int(model.joint("ball_free").qposadr[0])

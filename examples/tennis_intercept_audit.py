@@ -99,7 +99,7 @@ def main() -> None:
         "search_region": {
             "x_m": [-10.1, -9.45],
             "absolute_y_max_m": 1.1,
-            "z_m": [0.15, 1.35],
+            "z_m": [0.60, 1.35],
             "post_bounce_only": True,
         },
         "ik_config": {

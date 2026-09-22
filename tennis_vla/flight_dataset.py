@@ -12,7 +12,7 @@ import mujoco
 import numpy as np
 from PIL import Image, ImageDraw
 
-from .arm import home_configuration
+from .arm import tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult
 from .domain_randomization import (
     RenderDomain,
@@ -199,7 +199,7 @@ def generate_flight_dataset(
     output_dir.mkdir(parents=True)
     model = make_tennis_contact_model()
     data = mujoco.MjData(model)
-    data.qpos[:7] = home_configuration(model)
+    data.qpos[:7] = tennis_ready_configuration(model)
     data.ctrl[:] = data.qpos[:7]
     ball_qpos_address = int(model.joint("ball_free").qposadr[0])
     renderer = mujoco.Renderer(model, width=width, height=height)

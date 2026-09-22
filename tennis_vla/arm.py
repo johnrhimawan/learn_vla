@@ -14,6 +14,18 @@ ARM_MODEL = "rethink_robotics_sawyer"
 ARM_ENTRY = "sawyer"
 ARM_OID = "4b0d742b4136b8f8ec9a30af036dea239588d485"
 ARM_ARCHIVE_SHA256 = "79bd43888554d98bd4e5b5fc784f4fd384653b6da160495d55cebb821faaf97e"
+TENNIS_READY_QPOS_RAD = np.array(
+    [
+        -0.04168706145607054,
+        -0.8169774398390002,
+        -0.3227214808141803,
+        1.3621882414605269,
+        0.26116175300348615,
+        1.0734506385100289,
+        4.435779923828908,
+    ],
+    dtype=np.float64,
+)
 
 
 def _verified_robot() -> menagerie.Robot:
@@ -80,6 +92,19 @@ def home_configuration(model: mujoco.MjModel) -> np.ndarray:
     if model.nkey < 1:
         raise RuntimeError("Pinned Sawyer model has no home keyframe")
     return model.key_qpos[0, :7].copy()
+
+
+def tennis_ready_configuration(model: mujoco.MjModel) -> np.ndarray:
+    """Return the collision-free phase-one ready pose for the pinned arm."""
+    if model.nq < 7:
+        raise ValueError("model must contain the seven arm joints first")
+    lower = model.jnt_range[:7, 0]
+    upper = model.jnt_range[:7, 1]
+    if np.any(TENNIS_READY_QPOS_RAD < lower) or np.any(
+        TENNIS_READY_QPOS_RAD > upper
+    ):
+        raise RuntimeError("tennis ready pose is outside the model joint limits")
+    return TENNIS_READY_QPOS_RAD.copy()
 
 
 def audit_workspace(samples: int = 20_000, seed: int = 2026) -> dict[str, Any]:
