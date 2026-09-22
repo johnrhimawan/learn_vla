@@ -156,10 +156,29 @@ lateral velocity to +/-0.5 m/s, launch height to 1.2-1.6 m, forward speed to
 14-18 m/s, and vertical speed to 4-5 m/s. It leaves the broader perception
 distribution unchanged. Separate train, validation, and test seed ranges must
 each exceed 95% kinematic eligibility before dynamic swing work uses them.
-The recorded 200-feed splits reach 97.0% for train, 97.0% for validation, and
-98.5% for the untouched test seeds. The report is
+The IK solver reserves 0.03 rad at every joint limit. With that buffer, the
+recorded 200-feed splits reach 97.0% for train, 96.5% for validation, and 98.0%
+for the untouched test seeds. The report is
 `results/tennis/contact_curriculum_kinematic_audit_v0.json`. These rates prove
 pose eligibility and do not yet prove executed contact.
+
+The next oracle layer connects the home pose to each contact pose with a
+quintic minimum-jerk joint trajectory. Its current simulation contract limits
+each joint to 4 rad/s, 15 rad/s^2, and the same 0.03 rad joint-limit buffer.
+Planning begins at the programmable feeder trigger, which is known to the
+privileged M2 oracle. On the held-out test split, 193 of 200 feeds (96.5%) have
+an analytically feasible arrival. Four lack a buffered IK pose and three exceed
+the speed limit. Selected arrivals have a median peak joint speed of 2.55 rad/s
+and a 95th-percentile peak of 3.33 rad/s; their 95th-percentile peak acceleration
+is 6.56 rad/s^2. The evidence is in
+`results/tennis/dynamic_intercept_audit_v0.json`.
+
+This trajectory ends at zero joint velocity. It validates time-to-pose and
+joint bounds, but it is not yet an active tennis swing. M2 still needs actuator
+tracking in MuJoCo, a nonzero contact-velocity trajectory, executed ball-racket
+contact, collision checks, and outgoing-ball placement. The project limits are
+simulation assumptions and must be replaced by authoritative limits for any
+physical arm.
 
 ### M3 — Behavior-cloned visual returns
 
@@ -284,6 +303,9 @@ adapted only through a versioned action schema.
    validator are implemented; production generation and learning remain.**
 7. Add calibrated spin and string-bed response.
 8. Implement the privileged intercept oracle and create `tennis-strike-oracle-v0`.
+   **Buffered IK and zero-velocity minimum-jerk arrival feasibility are
+   implemented; actuator tracking, active strike velocity, executed contact,
+   and dataset export remain.**
 
 The machine-readable status and gates live in `configs/tennis/roadmap.yaml`.
 
