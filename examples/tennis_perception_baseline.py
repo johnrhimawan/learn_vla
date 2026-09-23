@@ -16,10 +16,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.arm import tennis_ready_configuration
-from tennis_vla.arm import arm_layout
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import ProgrammableFeeder
+from tennis_vla.robot import arm_layout, tennis_ready_configuration
+from tennis_vla.environment import ProgrammableFeeder, make_tennis_contact_model
 from tennis_vla.perception import (
     fit_constant_velocity_track,
     predict_x_crossing_time,

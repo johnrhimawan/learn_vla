@@ -13,15 +13,15 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.ballistics import simulate_ball_flight
+from tennis_vla.physics import simulate_ball_flight
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import (
+from tennis_vla.control import (
     StrikeExecutionConfig,
     audit_court_bounce,
     execute_strike,
     simulate_mujoco_ball_flight,
 )
-from tennis_vla.strike import plan_safe_center_strikes
+from tennis_vla.planning import plan_safe_center_strikes
 
 
 CANONICAL_POSITION_M = np.array([10.5, 0.0, 1.4])

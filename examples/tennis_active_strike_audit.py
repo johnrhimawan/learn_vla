@@ -15,14 +15,17 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import (
+from tennis_vla.environment import (
+    PHASE_ONE_CONTACT_ENVELOPE,
+    ProgrammableFeeder,
+    make_tennis_contact_model,
+)
+from tennis_vla.control import (
     StrikeExecutionConfig,
     execute_strike,
     simulate_mujoco_ball_flight,
 )
-from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
-from tennis_vla.strike import plan_safe_center_strikes
+from tennis_vla.planning import plan_safe_center_strikes
 
 
 SAFETY_FAILURES = {

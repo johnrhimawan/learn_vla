@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.learned_perception import train_ball_heatmap_detector
+from tennis_vla.perception import train_ball_heatmap_detector
 
 
 def main() -> None:

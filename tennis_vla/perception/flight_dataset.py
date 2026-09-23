@@ -12,17 +12,17 @@ import mujoco
 import numpy as np
 from PIL import Image, ImageDraw
 
-from .arm import arm_layout, tennis_ready_configuration
-from .ballistics import BallFlightConfig, BallFlightResult
+from ..robot.arm import arm_layout, tennis_ready_configuration
+from ..physics.ballistics import BallFlightConfig, BallFlightResult
 from .domain_randomization import (
     RenderDomain,
     apply_render_domain,
     postprocess_render,
     sample_render_domain,
 )
-from .environment import make_tennis_contact_model
-from .feeder import ProgrammableFeeder
-from .perception import camera_calibration
+from ..environment.scene import make_tennis_contact_model
+from ..environment.feeder import ProgrammableFeeder
+from .detection import camera_calibration
 
 
 DATASET_NAME = "tennis-flight-v0"

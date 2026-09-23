@@ -9,9 +9,9 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
-from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
-from .impact import apply_racket_impact
+from ..robot.arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
+from ..physics.ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
+from ..physics.impact import apply_racket_impact
 from .intercept import InterceptCandidate, RacketIKConfig, find_kinematic_intercepts
 from .trajectory import SimulationJointMotionLimits
 

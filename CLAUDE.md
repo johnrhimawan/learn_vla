@@ -95,29 +95,29 @@ documentation:
 
 | Layer | Rate | Role | Code |
 | --- | ---: | --- | --- |
-| Safety monitor | 1 kHz | motion, workspace, contact limits | `execution.py` |
-| Joint servo | 250 Hz | track the feasible racket trajectory | `execution.py` |
-| Strike policy | 50 Hz | intercept time, pose, racket velocity | `strike.py` (not yet real-time) |
+| Safety monitor | 1 kHz | motion, workspace, contact limits | `control/execution.py` |
+| Joint servo | 250 Hz | track the feasible racket trajectory | `control/execution.py` |
+| Strike policy | 50 Hz | intercept time, pose, racket velocity | `planning/strike.py` (not yet real-time) |
 | VLA planner | 10 Hz | vision + language → stroke intent | planned (M3+) |
 
 Planning-to-execution data flow, one module per stage:
 
 ```
-feeder.py           seeded feed (rejection-sampled for a legal first bounce)
+environment/feeder.py   seeded feed (rejection-sampled for a legal first bounce)
   ↓
-ballistics.py       analytical no-spin RK4 flight  ─┐
-execution.py        simulate_mujoco_ball_flight()  ─┴─ two flight models, both used
+physics/ballistics.py   analytical no-spin RK4 flight  ─┐
+control/execution.py    simulate_mujoco_ball_flight()  ─┴─ two flight models, both used
   ↓
-intercept.py        racket-pose IK → InterceptCandidate (time, pose, joint config)
+planning/intercept.py   racket-pose IK → InterceptCandidate (time, pose, joint config)
   ↓
-strike.py           plan_safe_center_strikes(): search over face pitch/yaw, normal speed,
-                    tangent ratio; quintic joint trajectory; execution + recovery screens;
-                    ranks StrikePlans by landing-target error
+planning/strike.py      plan_safe_center_strikes(): search over face pitch/yaw, normal speed,
+                        tangent ratio; quintic joint trajectory; execution + recovery
+                        screens; ranks StrikePlans by landing-target error
   ↓
-trajectory.py       minimum-jerk arrival + dynamic feasibility screens
+planning/trajectory.py  minimum-jerk arrival + dynamic feasibility screens
   ↓
-execution.py        execute_strike(): 1 kHz physics, 250 Hz reference tracking, live
-                    MuJoCo contact, legal-return scoring, bounded recovery to ready pose
+control/execution.py    execute_strike(): 1 kHz physics, 250 Hz reference tracking, live
+                        MuJoCo contact, legal-return scoring, bounded recovery to ready
 ```
 
 `execute_strike` takes an optional `observer` hook, called after each 1 kHz step
@@ -128,7 +128,7 @@ so it shows executed motion, not the plan.
 
 ### Never index the arm with a literal slice
 
-`arm.EmbodimentLayout` resolves the arm's indices **by joint name**; use
+`robot.EmbodimentLayout` resolves the arm's indices **by joint name**; use
 `arm_layout(model)` and its slices instead of `[:7]`. MuJoCo keeps four index spaces —
 `arm_joints` (`jnt_range`), `arm_dof` (`qvel`/`qacc`/`qfrc_*`/Jacobian columns),
 `arm_actuators` (`ctrl`/`actuator_*`), `arm_qpos` — and they coincide today *only*
@@ -150,7 +150,7 @@ leave those alone.
 ### Embodiment configuration
 
 `make_tennis_contact_model(base=...)` and `make_sawyer_racket_spec(base=...)` take
-`FixedBase()` (default) or `MobileBase()` from `arm.py`:
+`FixedBase()` (default) or `MobileBase()` from `tennis_vla.robot`:
 
 - `FixedBase` constructs **no** base joints. It is deliberately not "mobile joints
   locked to zero range" — an extra DoF changes the inverse-dynamics mass matrix, and
@@ -166,12 +166,12 @@ leave those alone.
 
 Nothing commands the base yet; stance selection is Stage 2.
 
-Two ball-flight models coexist deliberately: `ballistics.simulate_ball_flight` is the
+Two ball-flight models coexist deliberately: `physics.simulate_ball_flight` is the
 analytical reference used by the feeder and tests, while
-`execution.simulate_mujoco_ball_flight` is the calibrated contact model the planner and
+`control.simulate_mujoco_ball_flight` is the calibrated contact model the planner and
 audits run against. Planning from the wrong one produces plausible but wrong contacts.
 
-Scene conventions (`environment.make_tennis_contact_model`):
+Scene conventions (`environment.scene.make_tennis_contact_model`):
 - Court along ±x, net at x=0, half-length 11.885 m. Arm base at **x = -10.6**, so the
   robot works at negative x and feeds come from x ≈ +10 heading -x.
 - Primary contact box: x ∈ [-10.1, -9.45], |y| ≤ 1.1, z ∈ [0.60, 1.35]. The fallback
@@ -181,10 +181,10 @@ Scene conventions (`environment.make_tennis_contact_model`):
   invalidates the tracked bounce and contact reports.
 - The site `racket_center` is the IK and Jacobian target throughout.
 
-Perception is a parallel track: `perception.py` (fixed-color stereo baseline),
-`flight_dataset.py` + `domain_randomization.py` (randomized stereo dataset generation),
-`learned_perception.py` (heatmap detector training/inference),
-`perception_evaluation.py` (baseline scoring).
+Perception is a parallel track under `perception/`: `detection.py` (fixed-color stereo
+baseline), `flight_dataset.py` + `domain_randomization.py` (randomized stereo dataset
+generation), `learned.py` (heatmap detector training/inference), `evaluation.py`
+(baseline scoring).
 
 ### Strike planner fallback staging
 
@@ -218,6 +218,12 @@ claims follow from them.
 
 - `tennis_vla/` is a plain package (`package = false` in `pyproject.toml`); scripts in
   `examples/` prepend the repo root via `sys.path.insert(0, ...)` before importing it.
+- **Layered subpackages, imports point one way only:** `physics`, `robot` →
+  `environment` → `planning` → `control`, with `perception` depending on
+  `environment` and below. `tests/test_package_layering.py` enforces this, so a
+  backwards import fails the suite rather than quietly creating a cycle. Import from
+  the package that owns the concept (`from tennis_vla.planning import ...`); each
+  subpackage re-exports its public API through `__init__.py`.
 - Config and result objects are frozen dataclasses with explicit unit suffixes
   (`_m`, `_m_s`, `_rad_s2`, `_hz`, `_deg`) and a `validate()` method raising `ValueError`.
 - Each example is an argparse CLI with an `--output` path defaulting under

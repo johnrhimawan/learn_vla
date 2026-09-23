@@ -14,7 +14,7 @@ from PIL import Image
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from .perception import BallDetection
+from .detection import BallDetection
 
 
 def project_world_point(

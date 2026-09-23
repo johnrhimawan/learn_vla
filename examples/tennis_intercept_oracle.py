@@ -9,9 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import ProgrammableFeeder
-from tennis_vla.intercept import find_kinematic_intercepts
+from tennis_vla.environment import ProgrammableFeeder, make_tennis_contact_model
+from tennis_vla.planning import find_kinematic_intercepts
 
 
 def main() -> None:

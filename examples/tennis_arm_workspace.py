@@ -16,7 +16,7 @@ import mujoco
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.arm import (
+from tennis_vla.robot import (
     arm_layout,
     audit_workspace,
     home_configuration,

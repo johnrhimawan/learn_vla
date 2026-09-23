@@ -9,8 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.learned_perception import LearnedBallDetector
-from tennis_vla.perception_evaluation import evaluate_stereo_detector
+from tennis_vla.perception import LearnedBallDetector, evaluate_stereo_detector
 
 
 def main() -> None:

@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.flight_dataset import generate_flight_dataset, write_summary
+from tennis_vla.perception import generate_flight_dataset, write_summary
 
 
 def main() -> None:

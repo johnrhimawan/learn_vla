@@ -39,7 +39,7 @@ Nothing commands the base yet. This is the substantial stage.
       (`trajectory.py`) calls `find_kinematic_intercepts` *without* forwarding
       bounds, so it silently uses the `intercept.py` copy. Two independent sets
       of the same constants.
-- [ ] **New `tennis_vla/stance.py`.** Given predicted flight, base limits and
+- [ ] **New `tennis_vla/planning/stance.py`.** Given predicted flight, base limits and
       current base state, propose contact-time stances reachable in the time
       available. `find_kinematic_intercepts` iterates only over ball time
       samples, so stance belongs outside it or as a new argument.

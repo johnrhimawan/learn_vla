@@ -210,7 +210,12 @@ for tuning. Seeds 10000–10199 are the current v1 development set. Seeds
 
 | Path | Purpose |
 | --- | --- |
-| `tennis_vla/` | tennis physics, perception, planning, control, and execution |
+| `tennis_vla/physics/` | ball flight, court geometry, and racket impact |
+| `tennis_vla/robot/` | the pinned Sawyer arm, racket, and optional mobile base |
+| `tennis_vla/environment/` | MuJoCo scene and the programmable ball machine |
+| `tennis_vla/planning/` | racket-pose IK, joint trajectories, and strike search |
+| `tennis_vla/control/` | execution of a planned strike against MuJoCo physics |
+| `tennis_vla/perception/` | ball detection, dataset generation, and evaluation |
 | `examples/tennis_*.py` | reproducible simulations, audits, training, and evaluation entry points |
 | `tests/` | deterministic tennis regression suite |
 | `configs/tennis/` | datasets, evaluation, compute, and milestone contracts |

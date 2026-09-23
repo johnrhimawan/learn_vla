@@ -9,17 +9,17 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import arm_layout, tennis_ready_configuration
-from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
-from .court import TennisCourtSpec
-from .strike import (
+from ..robot.arm import arm_layout, tennis_ready_configuration
+from ..physics.ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
+from ..physics.court import TennisCourtSpec
+from ..planning.strike import (
     DEFAULT_RECOVERY_DURATIONS_S,
     JointTrajectoryBounds,
     QuinticJointTrajectory,
     StrikePlan,
     plan_ready_recovery_trajectory,
 )
-from .trajectory import SimulationJointMotionLimits
+from ..planning.trajectory import SimulationJointMotionLimits
 
 
 # Optional read-only hook called after every physics step.  It exists so

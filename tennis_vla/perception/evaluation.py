@@ -11,7 +11,7 @@ from typing import Any, Callable
 import numpy as np
 from PIL import Image
 
-from .perception import (
+from .detection import (
     BallDetection,
     camera_ray_from_calibration,
     detect_yellow_ball,

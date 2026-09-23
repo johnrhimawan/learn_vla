@@ -5,7 +5,7 @@ import unittest
 import mujoco
 import numpy as np
 
-from tennis_vla.arm import (
+from tennis_vla.robot import (
     ARM_JOINT_NAMES,
     EmbodimentLayout,
     MobileBase,
@@ -87,7 +87,7 @@ class TennisArmTests(unittest.TestCase):
     def test_trajectory_bounds_read_the_arm_range_not_a_prefix(self) -> None:
         # A prefix slice would read the base travel limits on a mobile model
         # and silently reject every arm trajectory.
-        from tennis_vla.strike import QuinticJointTrajectory
+        from tennis_vla.planning import QuinticJointTrajectory
 
         model = make_tennis_contact_model(base=MobileBase())
         ready = tennis_ready_configuration(model)

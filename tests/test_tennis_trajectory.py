@@ -4,10 +4,13 @@ import unittest
 
 import numpy as np
 
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
-from tennis_vla.intercept import RacketIKConfig
-from tennis_vla.trajectory import (
+from tennis_vla.environment import (
+    PHASE_ONE_CONTACT_ENVELOPE,
+    ProgrammableFeeder,
+    make_tennis_contact_model,
+)
+from tennis_vla.planning import RacketIKConfig
+from tennis_vla.planning import (
     MINIMUM_JERK_PEAK_ACCELERATION,
     MINIMUM_JERK_PEAK_SPEED,
     earliest_feasible_arrival,

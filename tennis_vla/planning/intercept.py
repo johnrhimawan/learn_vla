@@ -8,8 +8,8 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
-from .ballistics import BallFlightConfig, BallFlightResult
+from ..robot.arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
+from ..physics.ballistics import BallFlightConfig, BallFlightResult
 
 
 @dataclass(frozen=True)

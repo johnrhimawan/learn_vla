@@ -5,10 +5,9 @@ import unittest
 import mujoco
 import numpy as np
 
-from tennis_vla.arm import arm_layout, tennis_ready_configuration
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import ProgrammableFeeder
-from tennis_vla.intercept import find_kinematic_intercepts, solve_racket_pose
+from tennis_vla.robot import arm_layout, tennis_ready_configuration
+from tennis_vla.environment import ProgrammableFeeder, make_tennis_contact_model
+from tennis_vla.planning import find_kinematic_intercepts, solve_racket_pose
 
 
 class TennisInterceptTests(unittest.TestCase):

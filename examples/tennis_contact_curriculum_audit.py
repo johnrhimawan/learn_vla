@@ -11,9 +11,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
-from tennis_vla.intercept import RacketIKConfig, find_kinematic_intercepts
+from tennis_vla.environment import (
+    PHASE_ONE_CONTACT_ENVELOPE,
+    ProgrammableFeeder,
+    make_tennis_contact_model,
+)
+from tennis_vla.planning import RacketIKConfig, find_kinematic_intercepts
 
 
 SPLITS = {"train": (0, 200), "validation": (8000, 200), "test": (9000, 200)}

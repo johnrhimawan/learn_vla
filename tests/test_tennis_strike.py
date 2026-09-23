@@ -4,9 +4,9 @@ import unittest
 
 import numpy as np
 
-from tennis_vla.ballistics import simulate_ball_flight
+from tennis_vla.physics import simulate_ball_flight
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.strike import (
+from tennis_vla.planning import (
     QuinticJointTrajectory,
     StrikeSearchConfig,
     minimum_infinity_joint_velocity,

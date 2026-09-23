@@ -8,16 +8,16 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import (
+from ..robot.arm import (
     BOLTED_BASE_POSITION_M,
     BaseConfig,
     arm_layout,
     make_sawyer_racket_spec,
     tennis_ready_configuration,
 )
-from .ballistics import BallFlightConfig
-from .court import TennisCourtSpec
-from .impact import RacketImpactConfig
+from ..physics.ballistics import BallFlightConfig
+from ..physics.court import TennisCourtSpec
+from ..physics.impact import RacketImpactConfig
 
 
 STEREO_CAMERA_TARGET_M = (-6.5, 0.0, 1.0)
