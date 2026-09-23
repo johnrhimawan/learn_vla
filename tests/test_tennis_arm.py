@@ -8,6 +8,7 @@ import numpy as np
 from tennis_vla.arm import (
     ARM_JOINT_NAMES,
     EmbodimentLayout,
+    MobileBase,
     arm_layout,
     audit_workspace,
     home_configuration,
@@ -57,6 +58,48 @@ class TennisArmTests(unittest.TestCase):
         spec.worldbody.add_body(name="lonely").add_freejoint(name="drift")
         with self.assertRaises(ValueError):
             EmbodimentLayout.from_model(spec.compile())
+
+    def test_mobile_base_adds_three_leading_degrees_of_freedom(self) -> None:
+        model = make_tennis_contact_model(base=MobileBase())
+        layout = arm_layout(model)
+        self.assertEqual(model.nq, 17)
+        self.assertEqual(model.nv, 16)
+        self.assertEqual(model.nu, 10)
+        self.assertTrue(layout.has_mobile_base)
+        self.assertEqual(layout.base_dof_count, 3)
+        # The base sorts ahead of the arm in qpos, but its actuators are
+        # appended after the arm's.  A single index space would be wrong.
+        self.assertEqual(layout.base_qpos, slice(0, 3))
+        self.assertEqual(layout.arm_qpos, slice(3, 10))
+        self.assertEqual(layout.arm_actuators, slice(0, 7))
+        self.assertEqual(layout.base_actuators, slice(7, 10))
+
+    def test_zero_base_configuration_is_the_bolted_stance(self) -> None:
+        fixed = make_tennis_contact_model()
+        mobile = make_tennis_contact_model(base=MobileBase())
+        positions = []
+        for model in (fixed, mobile):
+            data = mujoco.MjData(model)
+            mujoco.mj_forward(model, data)
+            positions.append(data.site_xpos[model.site("racket_center").id].copy())
+        np.testing.assert_allclose(positions[0], positions[1], atol=1e-12)
+
+    def test_trajectory_bounds_read_the_arm_range_not_a_prefix(self) -> None:
+        # A prefix slice would read the base travel limits on a mobile model
+        # and silently reject every arm trajectory.
+        from tennis_vla.strike import QuinticJointTrajectory
+
+        model = make_tennis_contact_model(base=MobileBase())
+        ready = tennis_ready_configuration(model)
+        trajectory = QuinticJointTrajectory.from_boundary_conditions(
+            ready, ready, duration_s=1.0
+        )
+        bounds = trajectory.bounds(model)
+        self.assertGreater(bounds.minimum_joint_limit_margin_rad, 0.0)
+
+    def test_mobile_base_rejects_a_range_excluding_the_bolted_stance(self) -> None:
+        with self.assertRaises(ValueError):
+            MobileBase(travel_y_m=(1.0, 5.0)).validate()
 
     def test_home_pose_is_finite_and_above_floor(self) -> None:
         data = mujoco.MjData(self.model)

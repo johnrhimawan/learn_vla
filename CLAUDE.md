@@ -135,10 +135,36 @@ so it shows executed motion, not the plan.
 because every arm joint is a 1-DoF hinge with a 1:1 actuator. Picking the wrong one
 still works on the fixed base and breaks silently later.
 
-This matters because mobile-base joints sort **ahead** of the arm: adding them makes
-`qpos[:7]` address `[base_x, base_y, base_yaw, j0, j1, j2, j3]` with the right shape,
-no exception, and wrong numbers. Note `qpos[addr : addr + 7]` for the ball is freejoint
-width (3 position + 4 quaternion), not an arm slice — leave those alone.
+This matters because mobile-base joints sort **ahead** of the arm: with
+`MobileBase`, `qpos[:7]` addresses `[base_x, base_y, base_yaw, j0, j1, j2, j3]` with the
+right shape, no exception, and wrong numbers. Base *actuators* meanwhile append **after**
+the arm's, so `arm_qpos` becomes `slice(3, 10)` while `arm_actuators` stays `slice(0, 7)`
+— which is exactly why one index space is not enough.
+
+Watch for prefix slices that are not literally `[:7]`. `QuinticJointTrajectory.bounds`
+used `jnt_range[: len(peak_speeds)]`, which on a mobile model silently compared arm
+angles against base travel limits and rejected every trajectory. Note `qpos[addr : addr
++ 7]` for the ball is freejoint width (3 position + 4 quaternion), not an arm slice —
+leave those alone.
+
+### Embodiment configuration
+
+`make_tennis_contact_model(base=...)` and `make_sawyer_racket_spec(base=...)` take
+`FixedBase()` (default) or `MobileBase()` from `arm.py`:
+
+- `FixedBase` constructs **no** base joints. It is deliberately not "mobile joints
+  locked to zero range" — an extra DoF changes the inverse-dynamics mass matrix, and
+  only omitting the joints keeps the tracked fixed-base results byte-reproducible.
+- `MobileBase` adds slide-x, slide-y and a yaw hinge to the Sawyer root body (no carrier
+  body; `body("base").add_joint` works directly). Planar joints, not wheels: no rolling
+  contact, no slip, no nonholonomic constraint. The base has no collision geoms, so it
+  does not touch the court — deliberate, since `trajectory_is_execution_safe` rejects on
+  *any* `data.ncon`.
+- Base joint values are **displacements from the bolted stance** (`BOLTED_BASE_POSITION_M`,
+  x = -10.6), so a zero base configuration is the fixed-base geometry and a fresh
+  `MjData` starts there. Nothing has to initialise the base.
+
+Nothing commands the base yet; stance selection is Stage 2.
 
 Two ball-flight models coexist deliberately: `ballistics.simulate_ball_flight` is the
 analytical reference used by the feeder and tests, while

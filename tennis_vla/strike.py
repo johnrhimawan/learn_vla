@@ -9,7 +9,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import arm_layout, tennis_ready_configuration
+from .arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 from .impact import apply_racket_impact
 from .intercept import InterceptCandidate, RacketIKConfig, find_kinematic_intercepts
@@ -279,13 +279,22 @@ class QuinticJointTrajectory:
         )
         return position, velocity, acceleration
 
-    def bounds(self, model: mujoco.MjModel) -> JointTrajectoryBounds:
+    def bounds(
+        self,
+        model: mujoco.MjModel,
+        layout: EmbodimentLayout | None = None,
+    ) -> JointTrajectoryBounds:
         """Compute exact polynomial extrema over the closed trajectory interval."""
+        layout = layout or arm_layout(model)
         peak_speeds = np.zeros(self.coefficients.shape[0], dtype=np.float64)
         peak_accelerations = np.zeros_like(peak_speeds)
         minimum_margin = float("inf")
-        joint_lower = model.jnt_range[: len(peak_speeds), 0]
-        joint_upper = model.jnt_range[: len(peak_speeds), 1]
+        if len(peak_speeds) != layout.arm_dof_count:
+            raise ValueError(
+                "trajectory width does not match the arm degrees of freedom"
+            )
+        joint_lower = model.jnt_range[layout.arm_joints, 0]
+        joint_upper = model.jnt_range[layout.arm_joints, 1]
 
         for joint, coefficients in enumerate(self.coefficients):
             c0, c1, c2, c3, c4, c5 = coefficients
@@ -572,7 +581,7 @@ def plan_ready_recovery_trajectory(
             start_acceleration_rad_s2=zeros,
             target_acceleration_rad_s2=zeros,
         )
-        bounds = trajectory.bounds(model)
+        bounds = trajectory.bounds(model, layout)
         if (
             bounds.maximum_joint_speed_rad_s > limits.maximum_speed_rad_s
             or bounds.maximum_joint_acceleration_rad_s2
@@ -737,7 +746,7 @@ def plan_safe_center_strikes(
                                 target_velocity_rad_s=contact_joint_velocity,
                             )
                         )
-                        bounds = trajectory.bounds(model)
+                        bounds = trajectory.bounds(model, layout)
                         if (
                             bounds.maximum_joint_speed_rad_s
                             > min(

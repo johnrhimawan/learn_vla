@@ -22,9 +22,15 @@ ARM_JOINT_NAMES: tuple[str, ...] = (
     "right_j5",
     "right_j6",
 )
-# Joints belonging to a mobile base carry this prefix.  No such joint exists
-# yet; the layout resolves an empty base so the fixed arm stays the default.
+# Joints belonging to a mobile base carry this prefix, which is how the layout
+# tells them apart from the arm.
 BASE_JOINT_PREFIX = "base_"
+BASE_SLIDE_X_JOINT = f"{BASE_JOINT_PREFIX}slide_x"
+BASE_SLIDE_Y_JOINT = f"{BASE_JOINT_PREFIX}slide_y"
+BASE_YAW_JOINT = f"{BASE_JOINT_PREFIX}yaw"
+# The bolted stance.  Mobile base joints are displacements from it, so a zero
+# base configuration reproduces the fixed-base geometry exactly.
+BOLTED_BASE_POSITION_M = (-10.6, 0.0, 0.0)
 ARM_OID = "4b0d742b4136b8f8ec9a30af036dea239588d485"
 ARM_ARCHIVE_SHA256 = "79bd43888554d98bd4e5b5fc784f4fd384653b6da160495d55cebb821faaf97e"
 TENNIS_READY_QPOS_RAD = np.array(
@@ -39,6 +45,93 @@ TENNIS_READY_QPOS_RAD = np.array(
     ],
     dtype=np.float64,
 )
+
+
+@dataclass(frozen=True)
+class FixedBase:
+    """Bolted base.  No base joints are constructed at all.
+
+    This is deliberately not "mobile joints locked to zero range": an extra
+    degree of freedom changes the inverse-dynamics mass matrix, so only
+    omitting the joints keeps the tracked fixed-base results reproducible.
+    """
+
+    def validate(self) -> None:
+        return None
+
+
+@dataclass(frozen=True)
+class MobileBase:
+    """Holonomic planar base: slide x, slide y, and a yaw hinge.
+
+    Planar joints rather than wheels.  Rolling contact would add tyre
+    friction, slip, and -- for a differential drive -- nonholonomic
+    constraints, none of which bear on where the robot should stand.
+
+    Joint values are displacements from ``BOLTED_BASE_POSITION_M``, so the
+    zero configuration a fresh ``MjData`` starts in is the bolted stance.
+    """
+
+    travel_x_m: tuple[float, float] = (-1.0, 9.6)
+    travel_y_m: tuple[float, float] = (-5.0, 5.0)
+    yaw_rad: tuple[float, float] = (-np.pi / 2.0, np.pi / 2.0)
+    translation_gain_n_per_m: float = 30_000.0
+    translation_damping_n_s_per_m: float = 3_000.0
+    yaw_gain_nm_per_rad: float = 6_000.0
+    yaw_damping_nm_s_per_rad: float = 600.0
+
+    def validate(self) -> None:
+        for name, (lower, upper) in (
+            ("travel_x_m", self.travel_x_m),
+            ("travel_y_m", self.travel_y_m),
+            ("yaw_rad", self.yaw_rad),
+        ):
+            if lower > 0.0 or upper < 0.0:
+                raise ValueError(f"{name} must contain the bolted stance at zero")
+            if lower >= upper:
+                raise ValueError(f"{name} must be a non-empty range")
+        if min(
+            self.translation_gain_n_per_m,
+            self.translation_damping_n_s_per_m,
+            self.yaw_gain_nm_per_rad,
+            self.yaw_damping_nm_s_per_rad,
+        ) <= 0.0:
+            raise ValueError("base actuator gains and damping must be positive")
+
+
+BaseConfig = FixedBase | MobileBase
+
+
+def _add_mobile_base(spec: mujoco.MjSpec, base: MobileBase) -> None:
+    """Give the Sawyer root body planar freedom, actuated in place."""
+    base.validate()
+    root = spec.body("base")
+    joints = (
+        (BASE_SLIDE_X_JOINT, mujoco.mjtJoint.mjJNT_SLIDE, [1.0, 0.0, 0.0],
+         base.travel_x_m, base.translation_gain_n_per_m,
+         base.translation_damping_n_s_per_m),
+        (BASE_SLIDE_Y_JOINT, mujoco.mjtJoint.mjJNT_SLIDE, [0.0, 1.0, 0.0],
+         base.travel_y_m, base.translation_gain_n_per_m,
+         base.translation_damping_n_s_per_m),
+        (BASE_YAW_JOINT, mujoco.mjtJoint.mjJNT_HINGE, [0.0, 0.0, 1.0],
+         base.yaw_rad, base.yaw_gain_nm_per_rad, base.yaw_damping_nm_s_per_rad),
+    )
+    # Declaration order is transform order: translate, then turn.
+    for name, joint_type, axis, joint_range, gain, damping in joints:
+        joint = root.add_joint(name=name, type=joint_type, axis=axis)
+        joint.range = list(joint_range)
+        joint.limited = 1
+    for name, _, _, joint_range, gain, damping in joints:
+        actuator = spec.add_actuator()
+        actuator.name = name
+        actuator.target = name
+        actuator.trntype = mujoco.mjtTrn.mjTRN_JOINT
+        actuator.gaintype = mujoco.mjtGain.mjGAIN_FIXED
+        actuator.biastype = mujoco.mjtBias.mjBIAS_AFFINE
+        actuator.gainprm = [gain] + [0.0] * 9
+        actuator.biasprm = [0.0, -gain, -damping] + [0.0] * 7
+        actuator.ctrlrange = list(joint_range)
+        actuator.ctrllimited = 1
 
 
 def _contiguous_slice(values: list[int], description: str) -> slice:
@@ -148,8 +241,11 @@ def _verified_robot() -> menagerie.Robot:
     return robot
 
 
-def make_sawyer_racket_spec() -> mujoco.MjSpec:
+def make_sawyer_racket_spec(
+    base: BaseConfig | None = None,
+) -> mujoco.MjSpec:
     """Load the pinned Sawyer spec and attach a lightweight racket."""
+    base = base or FixedBase()
     spec = _verified_robot().spec(ARM_ENTRY)
     racket = spec.body("right_l6").add_body(
         name="tennis_racket",
@@ -191,12 +287,14 @@ def make_sawyer_racket_spec() -> mujoco.MjSpec:
         size=[0.009, 0.0, 0.0],
         rgba=[0.95, 0.30, 0.12, 1.0],
     )
+    if isinstance(base, MobileBase):
+        _add_mobile_base(spec, base)
     return spec
 
 
-def make_sawyer_racket_model() -> mujoco.MjModel:
+def make_sawyer_racket_model(base: BaseConfig | None = None) -> mujoco.MjModel:
     """Compile the pinned Sawyer and its generated racket."""
-    return make_sawyer_racket_spec().compile()
+    return make_sawyer_racket_spec(base).compile()
 
 
 def home_configuration(model: mujoco.MjModel) -> np.ndarray:
