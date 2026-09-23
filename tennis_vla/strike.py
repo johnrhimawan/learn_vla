@@ -9,7 +9,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import tennis_ready_configuration
+from .arm import arm_layout, tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 from .impact import apply_racket_impact
 from .intercept import InterceptCandidate, RacketIKConfig, find_kinematic_intercepts
@@ -502,6 +502,7 @@ def trajectory_is_execution_safe(
     if post_contact_time_s < 0.0:
         raise ValueError("post_contact_time_s cannot be negative")
     data = mujoco.MjData(model)
+    layout = arm_layout(model)
     ball_joint = model.joint("ball_free")
     ball_qpos_address = int(ball_joint.qposadr[0])
     data.qpos[ball_qpos_address : ball_qpos_address + 7] = [
@@ -513,10 +514,10 @@ def trajectory_is_execution_safe(
         0.0,
         0.0,
     ]
-    actuator_gain = model.actuator_gainprm[:7, 0]
-    actuator_damping = -model.actuator_biasprm[:7, 2]
-    control_lower = model.actuator_ctrlrange[:7, 0]
-    control_upper = model.actuator_ctrlrange[:7, 1]
+    actuator_gain = model.actuator_gainprm[layout.arm_actuators, 0]
+    actuator_damping = -model.actuator_biasprm[layout.arm_actuators, 2]
+    control_lower = model.actuator_ctrlrange[layout.arm_actuators, 0]
+    control_upper = model.actuator_ctrlrange[layout.arm_actuators, 1]
     total_duration = trajectory.duration_s + post_contact_time_s
     sample_count = int(np.ceil(total_duration / sample_period_s))
     terminal_position, terminal_velocity, _ = trajectory.sample(
@@ -535,7 +536,7 @@ def trajectory_is_execution_safe(
             position_command > control_upper
         ):
             return False
-        data.qpos[:7] = position
+        data.qpos[layout.arm_qpos] = position
         mujoco.mj_forward(model, data)
         if data.ncon:
             return False
@@ -558,8 +559,9 @@ def plan_ready_recovery_trajectory(
         raise ValueError("recovery duration candidates must be positive")
     limits = limits or SimulationJointMotionLimits()
     limits.validate()
+    layout = arm_layout(model)
     ready = tennis_ready_configuration(model)
-    zeros = np.zeros(7, dtype=np.float64)
+    zeros = np.zeros(layout.arm_dof_count, dtype=np.float64)
     for duration_s in duration_candidates_s:
         trajectory = QuinticJointTrajectory.from_boundary_conditions(
             start_position_rad,
@@ -604,6 +606,10 @@ def plan_safe_center_strikes(
     limits = limits or SimulationJointMotionLimits()
     limits.validate()
     ik_config = ik_config or strike_ik_config()
+    layout = arm_layout(model)
+    # The wrist roll is the last arm joint; the index is arm-local because the
+    # Jacobian handed to the solver is already sliced to the arm.
+    wrist_roll_index = layout.arm_dof_count - 1
     start = tennis_ready_configuration(model)
     landing_target = np.asarray(search.landing_target_xy_m, dtype=np.float64)
     site_id = model.site("racket_center").id
@@ -674,7 +680,7 @@ def plan_safe_center_strikes(
             planning_counts["kinematic_candidates"] += len(candidates)
             for candidate in candidates:
                 data = mujoco.MjData(model)
-                data.qpos[:7] = candidate.solution.joint_positions_rad
+                data.qpos[layout.arm_qpos] = candidate.solution.joint_positions_rad
                 mujoco.mj_forward(model, data)
                 jacobian_position = np.zeros((3, model.nv), dtype=np.float64)
                 jacobian_rotation = np.zeros((3, model.nv), dtype=np.float64)
@@ -691,13 +697,15 @@ def plan_safe_center_strikes(
                     )
                     try:
                         unit_joint_velocity = minimum_infinity_joint_velocity(
-                            jacobian_position[:, :7],
+                            jacobian_position[:, layout.arm_dof],
                             unit_racket_velocity,
                             fixed_joint_velocities=(
                                 None
                                 if search.fixed_wrist_roll_velocity_rad_s is None
                                 else {
-                                    6: search.fixed_wrist_roll_velocity_rad_s
+                                    wrist_roll_index: (
+                                        search.fixed_wrist_roll_velocity_rad_s
+                                    )
                                 }
                             ),
                         )
@@ -710,7 +718,7 @@ def plan_safe_center_strikes(
                             unit_joint_velocity * racket_speed
                         )
                         racket_velocity = (
-                            jacobian_position[:, :7] @ contact_joint_velocity
+                            jacobian_position[:, layout.arm_dof] @ contact_joint_velocity
                         )
                         try:
                             outgoing_velocity = apply_racket_impact(

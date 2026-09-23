@@ -28,14 +28,14 @@ pins `UV_CACHE_DIR=.uv-cache` and `HF_HOME=.cache/huggingface`.
 ```bash
 brew install ffmpeg@8 && uv sync          # setup (Python 3.12, uv, package = false)
 
-scripts/run python -m unittest discover -s tests -v          # full suite (~35 tests, ~45 s)
-scripts/run python -m unittest tests.test_tennis_strike -v   # one module
-scripts/run python -m unittest tests.test_tennis_strike.TennisStrikeTests.test_quintic_matches_all_boundary_conditions
+scripts/run python -m unittest discover -s tests -v          # full suite (~38 tests, ~45 s)
+scripts/run python -m unittest discover -s tests -p test_tennis_strike.py -v   # one module
 scripts/run python -m compileall -q tennis_vla examples tests
 ```
 
 `pytest`, Ruff, and Black are **not installed**. Validation is `unittest`, `compileall`,
-and `git diff --check`. Finish every change with, in order:
+and `git diff --check`. `tests/` has no `__init__.py`, so `unittest tests.test_x` does
+**not** resolve — select a module with `discover -p`. Finish every change with, in order:
 
 ```bash
 scripts/run python -m unittest discover -s tests -v
@@ -125,6 +125,20 @@ of both the strike and the recovery. It is read-only and must stay that way — 
 exists so `examples/render_tennis_strike.py` can record the executed motion
 without duplicating the controller. The README animation is rendered through it,
 so it shows executed motion, not the plan.
+
+### Never index the arm with a literal slice
+
+`arm.EmbodimentLayout` resolves the arm's indices **by joint name**; use
+`arm_layout(model)` and its slices instead of `[:7]`. MuJoCo keeps four index spaces —
+`arm_joints` (`jnt_range`), `arm_dof` (`qvel`/`qacc`/`qfrc_*`/Jacobian columns),
+`arm_actuators` (`ctrl`/`actuator_*`), `arm_qpos` — and they coincide today *only*
+because every arm joint is a 1-DoF hinge with a 1:1 actuator. Picking the wrong one
+still works on the fixed base and breaks silently later.
+
+This matters because mobile-base joints sort **ahead** of the arm: adding them makes
+`qpos[:7]` address `[base_x, base_y, base_yaw, j0, j1, j2, j3]` with the right shape,
+no exception, and wrong numbers. Note `qpos[addr : addr + 7]` for the ball is freejoint
+width (3 position + 4 quaternion), not an arm slice — leave those alone.
 
 Two ball-flight models coexist deliberately: `ballistics.simulate_ball_flight` is the
 analytical reference used by the feeder and tests, while

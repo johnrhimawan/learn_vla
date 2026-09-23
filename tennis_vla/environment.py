@@ -8,7 +8,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import make_sawyer_racket_spec, tennis_ready_configuration
+from .arm import arm_layout, make_sawyer_racket_spec, tennis_ready_configuration
 from .ballistics import BallFlightConfig
 from .court import TennisCourtSpec
 from .impact import RacketImpactConfig
@@ -230,8 +230,9 @@ def probe_stationary_racket_contact(
     # Isolate contact response from ball drop and arm gravity compensation.
     model.opt.gravity[:] = 0.0
     data = mujoco.MjData(model)
-    data.qpos[:7] = tennis_ready_configuration(model)
-    data.ctrl[:] = data.qpos[:7]
+    layout = arm_layout(model)
+    data.qpos[layout.arm_qpos] = tennis_ready_configuration(model)
+    data.ctrl[layout.arm_actuators] = data.qpos[layout.arm_qpos]
     mujoco.mj_forward(model, data)
 
     ball_joint = model.joint("ball_free")

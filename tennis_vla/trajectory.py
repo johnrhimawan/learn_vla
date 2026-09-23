@@ -8,7 +8,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import tennis_ready_configuration
+from .arm import arm_layout, tennis_ready_configuration
 from .ballistics import BallFlightResult
 from .intercept import (
     InterceptCandidate,
@@ -228,12 +228,13 @@ def assess_intercept_arrival(
     """Check an analytical minimum-jerk arrival against simulation limits."""
     limits = limits or SimulationJointMotionLimits()
     limits.validate()
+    layout = arm_layout(model)
     start = np.asarray(
         tennis_ready_configuration(model)
         if start_joint_positions_rad is None
         else start_joint_positions_rad,
         dtype=np.float64,
-    ).reshape(7)
+    ).reshape(layout.arm_dof_count)
     target = candidate.solution.joint_positions_rad.copy()
     duration = candidate.time_s - planning_start_time_s
     if duration <= 0.0:
@@ -244,8 +245,8 @@ def assess_intercept_arrival(
     peak_accelerations = (
         MINIMUM_JERK_PEAK_ACCELERATION * delta / duration**2
     )
-    joint_lower = model.jnt_range[:7, 0]
-    joint_upper = model.jnt_range[:7, 1]
+    joint_lower = model.jnt_range[layout.arm_joints, 0]
+    joint_upper = model.jnt_range[layout.arm_joints, 1]
     endpoint_margins = np.minimum(
         np.minimum(start - joint_lower, joint_upper - start),
         np.minimum(target - joint_lower, joint_upper - target),
@@ -356,8 +357,9 @@ def track_intercept_arrival(
 
     data = mujoco.MjData(model)
     inverse_data = mujoco.MjData(model)
-    data.qpos[:7] = plan.start_joint_positions_rad
-    data.ctrl[:7] = plan.start_joint_positions_rad
+    layout = arm_layout(model)
+    data.qpos[layout.arm_qpos] = plan.start_joint_positions_rad
+    data.ctrl[layout.arm_actuators] = plan.start_joint_positions_rad
     ball_joint = model.joint("ball_free")
     ball_qpos_address = int(ball_joint.qposadr[0])
     parked_ball_qpos = np.array([10.0, 0.0, 4.0, 1.0, 0.0, 0.0, 0.0])
@@ -367,12 +369,12 @@ def track_intercept_arrival(
     )
     mujoco.mj_forward(model, data)
 
-    actuator_gain = model.actuator_gainprm[:7, 0]
-    actuator_damping = -model.actuator_biasprm[:7, 2]
-    control_lower = model.actuator_ctrlrange[:7, 0]
-    control_upper = model.actuator_ctrlrange[:7, 1]
-    joint_lower = model.jnt_range[:7, 0]
-    joint_upper = model.jnt_range[:7, 1]
+    actuator_gain = model.actuator_gainprm[layout.arm_actuators, 0]
+    actuator_damping = -model.actuator_biasprm[layout.arm_actuators, 2]
+    control_lower = model.actuator_ctrlrange[layout.arm_actuators, 0]
+    control_upper = model.actuator_ctrlrange[layout.arm_actuators, 1]
+    joint_lower = model.jnt_range[layout.arm_joints, 0]
+    joint_upper = model.jnt_range[layout.arm_joints, 1]
     tracking_errors = []
     maximum_actual_speed = 0.0
     maximum_actual_acceleration = 0.0
@@ -396,24 +398,24 @@ def track_intercept_arrival(
                     plan.duration_s,
                 )
             )
-            inverse_data.qpos[:7] = desired_position
-            inverse_data.qvel[:7] = desired_velocity
+            inverse_data.qpos[layout.arm_qpos] = desired_position
+            inverse_data.qvel[layout.arm_dof] = desired_velocity
             # Refresh kinematics, then use unconstrained rigid-body inverse
             # dynamics. Contact forces are audited separately and must not be
             # injected into the feedforward torque.
             mujoco.mj_forward(model, inverse_data)
             inverse_data.qacc[:] = 0.0
-            inverse_data.qacc[:7] = desired_acceleration
+            inverse_data.qacc[layout.arm_dof] = desired_acceleration
             mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
-            inverse_torque = inverse_torque_all[:7]
+            inverse_torque = inverse_torque_all[layout.arm_dof]
             position_command = desired_position + (
                 actuator_damping * desired_velocity / actuator_gain
             )
             clipped = np.clip(position_command, control_lower, control_upper)
             if not np.array_equal(clipped, position_command):
                 clipped_commands += 1
-            data.ctrl[:7] = clipped
-            data.qfrc_applied[:7] = inverse_torque
+            data.ctrl[layout.arm_actuators] = clipped
+            data.qfrc_applied[layout.arm_dof] = inverse_torque
             maximum_inverse_torque = max(
                 maximum_inverse_torque,
                 float(np.max(np.abs(inverse_torque))),
@@ -428,19 +430,19 @@ def track_intercept_arrival(
             plan.duration_s,
         )
         tracking_errors.append(
-            float(np.max(np.abs(data.qpos[:7] - desired_position)))
+            float(np.max(np.abs(data.qpos[layout.arm_qpos] - desired_position)))
         )
         maximum_actual_speed = max(
             maximum_actual_speed,
-            float(np.max(np.abs(data.qvel[:7]))),
+            float(np.max(np.abs(data.qvel[layout.arm_dof]))),
         )
         maximum_actual_acceleration = max(
             maximum_actual_acceleration,
-            float(np.max(np.abs(data.qacc[:7]))),
+            float(np.max(np.abs(data.qacc[layout.arm_dof]))),
         )
         actual_margins = np.minimum(
-            data.qpos[:7] - joint_lower,
-            joint_upper - data.qpos[:7],
+            data.qpos[layout.arm_qpos] - joint_lower,
+            joint_upper - data.qpos[layout.arm_qpos],
         )
         minimum_actual_margin = min(
             minimum_actual_margin,
@@ -461,7 +463,7 @@ def track_intercept_arrival(
 
     mujoco.mj_forward(model, data)
     final_joint_error = float(
-        np.max(np.abs(data.qpos[:7] - plan.target_joint_positions_rad))
+        np.max(np.abs(data.qpos[layout.arm_qpos] - plan.target_joint_positions_rad))
     )
     site_id = model.site("racket_center").id
     actual_racket_position = data.site_xpos[site_id].copy()

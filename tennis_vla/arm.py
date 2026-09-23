@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+from dataclasses import dataclass
 from typing import Any
 
 import mujoco
@@ -12,6 +13,18 @@ import numpy as np
 
 ARM_MODEL = "rethink_robotics_sawyer"
 ARM_ENTRY = "sawyer"
+ARM_JOINT_NAMES: tuple[str, ...] = (
+    "right_j0",
+    "right_j1",
+    "right_j2",
+    "right_j3",
+    "right_j4",
+    "right_j5",
+    "right_j6",
+)
+# Joints belonging to a mobile base carry this prefix.  No such joint exists
+# yet; the layout resolves an empty base so the fixed arm stays the default.
+BASE_JOINT_PREFIX = "base_"
 ARM_OID = "4b0d742b4136b8f8ec9a30af036dea239588d485"
 ARM_ARCHIVE_SHA256 = "79bd43888554d98bd4e5b5fc784f4fd384653b6da160495d55cebb821faaf97e"
 TENNIS_READY_QPOS_RAD = np.array(
@@ -26,6 +39,104 @@ TENNIS_READY_QPOS_RAD = np.array(
     ],
     dtype=np.float64,
 )
+
+
+def _contiguous_slice(values: list[int], description: str) -> slice:
+    """Return a slice over consecutive indices, or raise if they are not."""
+    if not values:
+        return slice(0, 0)
+    if values != list(range(values[0], values[0] + len(values))):
+        raise RuntimeError(f"{description} must occupy consecutive indices: {values}")
+    return slice(values[0], values[0] + len(values))
+
+
+@dataclass(frozen=True)
+class EmbodimentLayout:
+    """Index ranges for the arm and any mobile-base joints.
+
+    MuJoCo keeps four index spaces that coincide only while every actuated
+    joint is a one-DoF hinge with a one-to-one actuator, which is why a literal
+    ``[:7]`` works today.  Adding base joints breaks that coincidence silently:
+    base joints sort ahead of the arm, so ``qpos[:7]`` would still have the
+    right shape while addressing the wrong degrees of freedom.  Resolving each
+    space by joint name keeps the arm addressable wherever it lands.
+    """
+
+    arm_joints: slice
+    arm_qpos: slice
+    arm_dof: slice
+    arm_actuators: slice
+    base_joints: slice
+    base_qpos: slice
+    base_dof: slice
+    base_actuators: slice
+
+    @property
+    def arm_dof_count(self) -> int:
+        return self.arm_dof.stop - self.arm_dof.start
+
+    @property
+    def base_dof_count(self) -> int:
+        return self.base_dof.stop - self.base_dof.start
+
+    @property
+    def has_mobile_base(self) -> bool:
+        return self.base_dof_count > 0
+
+    @classmethod
+    def from_model(cls, model: mujoco.MjModel) -> EmbodimentLayout:
+        """Resolve arm and base index ranges by joint name."""
+        joint_names = [model.joint(index).name for index in range(model.njnt)]
+        missing = [name for name in ARM_JOINT_NAMES if name not in joint_names]
+        if missing:
+            raise ValueError(f"model is missing arm joints: {missing}")
+
+        arm_ids = [joint_names.index(name) for name in ARM_JOINT_NAMES]
+        base_ids = [
+            index
+            for index, name in enumerate(joint_names)
+            if name.startswith(BASE_JOINT_PREFIX)
+        ]
+
+        def ranges(joint_ids: list[int], description: str) -> tuple[slice, slice, slice]:
+            joints = _contiguous_slice(joint_ids, f"{description} joints")
+            qpos = _contiguous_slice(
+                [int(model.jnt_qposadr[index]) for index in joint_ids],
+                f"{description} qpos addresses",
+            )
+            dof = _contiguous_slice(
+                [int(model.jnt_dofadr[index]) for index in joint_ids],
+                f"{description} dof addresses",
+            )
+            return joints, qpos, dof
+
+        arm_joints, arm_qpos, arm_dof = ranges(arm_ids, "arm")
+        base_joints, base_qpos, base_dof = ranges(base_ids, "base")
+
+        def actuators(joint_ids: list[int], description: str) -> slice:
+            actuator_ids = [
+                index
+                for index in range(model.nu)
+                if int(model.actuator_trntype[index]) == mujoco.mjtTrn.mjTRN_JOINT
+                and int(model.actuator_trnid[index, 0]) in joint_ids
+            ]
+            return _contiguous_slice(actuator_ids, f"{description} actuators")
+
+        return cls(
+            arm_joints=arm_joints,
+            arm_qpos=arm_qpos,
+            arm_dof=arm_dof,
+            arm_actuators=actuators(arm_ids, "arm"),
+            base_joints=base_joints,
+            base_qpos=base_qpos,
+            base_dof=base_dof,
+            base_actuators=actuators(base_ids, "base"),
+        )
+
+
+def arm_layout(model: mujoco.MjModel) -> EmbodimentLayout:
+    """Convenience wrapper for the common single-call use."""
+    return EmbodimentLayout.from_model(model)
 
 
 def _verified_robot() -> menagerie.Robot:
@@ -91,15 +202,16 @@ def make_sawyer_racket_model() -> mujoco.MjModel:
 def home_configuration(model: mujoco.MjModel) -> np.ndarray:
     if model.nkey < 1:
         raise RuntimeError("Pinned Sawyer model has no home keyframe")
-    return model.key_qpos[0, :7].copy()
+    # The compiler pads the pinned 7-value keyframe to the model width, so the
+    # arm entries must be selected by layout rather than by a leading slice.
+    return model.key_qpos[0, arm_layout(model).arm_qpos].copy()
 
 
 def tennis_ready_configuration(model: mujoco.MjModel) -> np.ndarray:
     """Return the collision-free phase-one ready pose for the pinned arm."""
-    if model.nq < 7:
-        raise ValueError("model must contain the seven arm joints first")
-    lower = model.jnt_range[:7, 0]
-    upper = model.jnt_range[:7, 1]
+    layout = arm_layout(model)
+    lower = model.jnt_range[layout.arm_joints, 0]
+    upper = model.jnt_range[layout.arm_joints, 1]
     if np.any(TENNIS_READY_QPOS_RAD < lower) or np.any(
         TENNIS_READY_QPOS_RAD > upper
     ):
@@ -111,8 +223,9 @@ def audit_workspace(samples: int = 20_000, seed: int = 2026) -> dict[str, Any]:
     if samples < 1:
         raise ValueError("samples must be positive")
     model = make_sawyer_racket_model()
-    if model.nq != 7 or model.nu != 7:
-        raise RuntimeError(f"Expected a 7-DoF arm, got nq={model.nq}, nu={model.nu}")
+    layout = arm_layout(model)
+    if layout.has_mobile_base:
+        raise RuntimeError("workspace audit expects the fixed-base reference arm")
     data = mujoco.MjData(model)
     center_id = model.site("racket_center").id
     tip_id = model.site("racket_tip").id

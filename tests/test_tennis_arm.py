@@ -6,6 +6,9 @@ import mujoco
 import numpy as np
 
 from tennis_vla.arm import (
+    ARM_JOINT_NAMES,
+    EmbodimentLayout,
+    arm_layout,
     audit_workspace,
     home_configuration,
     make_sawyer_racket_model,
@@ -26,9 +29,38 @@ class TennisArmTests(unittest.TestCase):
         self.assertGreater(self.model.site("racket_center").id, -1)
         self.assertGreater(float(self.model.body("tennis_racket").mass[0]), 0.1)
 
+    def test_layout_resolves_the_arm_by_joint_name(self) -> None:
+        layout = arm_layout(self.model)
+        self.assertEqual(layout.arm_dof_count, len(ARM_JOINT_NAMES))
+        self.assertFalse(layout.has_mobile_base)
+        self.assertEqual(layout.base_dof_count, 0)
+        resolved = [
+            self.model.joint(index).name
+            for index in range(
+                layout.arm_joints.start, layout.arm_joints.stop
+            )
+        ]
+        self.assertEqual(resolved, list(ARM_JOINT_NAMES))
+
+    def test_layout_matches_the_fixed_base_prefix_slices(self) -> None:
+        # Stage 0 must be a pure refactor: with no base joints the layout has
+        # to reproduce the literal [:7] slices it replaced.
+        for model in (self.model, make_tennis_contact_model()):
+            layout = arm_layout(model)
+            self.assertEqual(layout.arm_qpos, slice(0, 7))
+            self.assertEqual(layout.arm_dof, slice(0, 7))
+            self.assertEqual(layout.arm_joints, slice(0, 7))
+            self.assertEqual(layout.arm_actuators, slice(0, 7))
+
+    def test_layout_rejects_a_model_without_the_arm(self) -> None:
+        spec = mujoco.MjSpec()
+        spec.worldbody.add_body(name="lonely").add_freejoint(name="drift")
+        with self.assertRaises(ValueError):
+            EmbodimentLayout.from_model(spec.compile())
+
     def test_home_pose_is_finite_and_above_floor(self) -> None:
         data = mujoco.MjData(self.model)
-        data.qpos[:] = home_configuration(self.model)
+        data.qpos[arm_layout(self.model).arm_qpos] = home_configuration(self.model)
         mujoco.mj_forward(self.model, data)
         center = data.site("racket_center").xpos
         self.assertTrue(np.isfinite(center).all())
@@ -43,7 +75,9 @@ class TennisArmTests(unittest.TestCase):
 
     def test_tennis_ready_pose_has_no_self_contact(self) -> None:
         data = mujoco.MjData(self.model)
-        data.qpos[:] = tennis_ready_configuration(self.model)
+        data.qpos[arm_layout(self.model).arm_qpos] = tennis_ready_configuration(
+            self.model
+        )
         mujoco.mj_forward(self.model, data)
         self.assertEqual(data.ncon, 0)
 

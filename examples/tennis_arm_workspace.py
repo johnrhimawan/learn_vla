@@ -16,7 +16,12 @@ import mujoco
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.arm import audit_workspace, home_configuration, make_sawyer_racket_model
+from tennis_vla.arm import (
+    arm_layout,
+    audit_workspace,
+    home_configuration,
+    make_sawyer_racket_model,
+)
 
 
 def main() -> None:
@@ -39,8 +44,9 @@ def main() -> None:
 
     model = make_sawyer_racket_model()
     data = mujoco.MjData(model)
-    data.qpos[:] = home_configuration(model)
-    data.ctrl[:] = data.qpos
+    layout = arm_layout(model)
+    data.qpos[layout.arm_qpos] = home_configuration(model)
+    data.ctrl[layout.arm_actuators] = data.qpos[layout.arm_qpos]
     mujoco.mj_forward(model, data)
     with mujoco.viewer.launch_passive(model, data) as viewer:
         while viewer.is_running():

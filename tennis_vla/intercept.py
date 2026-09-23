@@ -8,7 +8,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import tennis_ready_configuration
+from .arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
 from .ballistics import BallFlightConfig, BallFlightResult
 
 
@@ -80,6 +80,7 @@ def _ik_initial_guesses(
     joint_lower: np.ndarray,
     joint_upper: np.ndarray,
     seed: int,
+    layout: EmbodimentLayout,
 ) -> list[np.ndarray]:
     if config.restarts < 1:
         raise ValueError("restarts must be at least one")
@@ -94,8 +95,10 @@ def _ik_initial_guesses(
     guesses = [ready]
     for values in config.initial_joint_guesses_rad:
         guess = np.asarray(values, dtype=np.float64)
-        if guess.shape != (7,):
-            raise ValueError("each initial joint guess must contain seven values")
+        if guess.shape != (layout.arm_dof_count,):
+            raise ValueError(
+                f"each initial joint guess must contain {layout.arm_dof_count} values"
+            )
         guesses.append(np.clip(guess, joint_lower, joint_upper))
     guesses.extend(
         np.clip(
@@ -103,7 +106,7 @@ def _ik_initial_guesses(
             + local_rng.normal(
                 0.0,
                 config.local_restart_standard_deviation_rad,
-                size=7,
+                size=layout.arm_dof_count,
             ),
             joint_lower,
             joint_upper,
@@ -128,10 +131,11 @@ def _solve_racket_pose_attempt(
     joint_upper: np.ndarray,
     initial: np.ndarray,
     restart: int,
+    layout: EmbodimentLayout,
 ) -> RacketIKSolution:
     site_id = model.site("racket_center").id
     data = mujoco.MjData(model)
-    data.qpos[:7] = initial
+    data.qpos[layout.arm_qpos] = initial
     preferred_position = tennis_ready_configuration(model)
     jacobian_position = np.zeros((3, model.nv), dtype=np.float64)
     jacobian_rotation = np.zeros((3, model.nv), dtype=np.float64)
@@ -160,8 +164,8 @@ def _solve_racket_pose_attempt(
         )
         jacobian = np.vstack(
             (
-                jacobian_position[:, :7],
-                config.normal_weight * jacobian_rotation[:, :7],
+                jacobian_position[:, layout.arm_dof],
+                config.normal_weight * jacobian_rotation[:, layout.arm_dof],
             )
         )
         error = np.concatenate(
@@ -176,11 +180,11 @@ def _solve_racket_pose_attempt(
         )
         joint_step = damped_inverse @ error
         if config.posture_weight > 0.0:
-            nullspace = np.eye(7) - damped_inverse @ jacobian
+            nullspace = np.eye(layout.arm_dof_count) - damped_inverse @ jacobian
             posture_step = (
                 config.posture_weight
                 * nullspace
-                @ (preferred_position - data.qpos[:7])
+                @ (preferred_position - data.qpos[layout.arm_qpos])
             )
             if task_converged and np.linalg.norm(posture_step) <= (
                 config.posture_tolerance_rad
@@ -190,8 +194,8 @@ def _solve_racket_pose_attempt(
         step_norm = float(np.linalg.norm(joint_step))
         if step_norm > config.maximum_step_rad:
             joint_step *= config.maximum_step_rad / step_norm
-        data.qpos[:7] = np.clip(
-            data.qpos[:7] + joint_step, joint_lower, joint_upper
+        data.qpos[layout.arm_qpos] = np.clip(
+            data.qpos[layout.arm_qpos] + joint_step, joint_lower, joint_upper
         )
 
     mujoco.mj_forward(model, data)
@@ -204,7 +208,7 @@ def _solve_racket_pose_attempt(
             position_norm <= config.position_tolerance_m
             and normal_degrees <= config.normal_tolerance_deg
         ),
-        joint_positions_rad=data.qpos[:7].copy(),
+        joint_positions_rad=data.qpos[layout.arm_qpos].copy(),
         racket_position_m=position,
         racket_normal=normal,
         position_error_m=position_norm,
@@ -219,7 +223,7 @@ def _prepare_ik(
     target_position_m: np.ndarray,
     target_normal: np.ndarray,
     config: RacketIKConfig,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, EmbodimentLayout]:
     if config.posture_weight < 0.0:
         raise ValueError("posture_weight cannot be negative")
     if config.posture_tolerance_rad <= 0.0:
@@ -230,13 +234,12 @@ def _prepare_ik(
     if normal_norm < 1e-9:
         raise ValueError("target_normal must be nonzero")
     normal /= normal_norm
-    if model.nq < 7 or model.nv < 7:
-        raise ValueError("model must contain the seven arm joints first")
-    joint_lower = model.jnt_range[:7, 0] + config.joint_limit_margin_rad
-    joint_upper = model.jnt_range[:7, 1] - config.joint_limit_margin_rad
+    layout = arm_layout(model)
+    joint_lower = model.jnt_range[layout.arm_joints, 0] + config.joint_limit_margin_rad
+    joint_upper = model.jnt_range[layout.arm_joints, 1] - config.joint_limit_margin_rad
     if np.any(joint_lower >= joint_upper):
         raise ValueError("joint_limit_margin_rad leaves an empty joint range")
-    return target_position, normal, joint_lower, joint_upper
+    return target_position, normal, joint_lower, joint_upper, layout
 
 
 def solve_racket_pose(
@@ -249,11 +252,11 @@ def solve_racket_pose(
 ) -> RacketIKSolution:
     """Solve racket-center position and face-normal alignment with restarts."""
     config = config or RacketIKConfig()
-    target_position, target_normal, joint_lower, joint_upper = _prepare_ik(
+    target_position, target_normal, joint_lower, joint_upper, layout = _prepare_ik(
         model, target_position_m, target_normal, config
     )
     initial_guesses = _ik_initial_guesses(
-        model, config, joint_lower, joint_upper, seed
+        model, config, joint_lower, joint_upper, seed, layout
     )
     best: RacketIKSolution | None = None
 
@@ -267,6 +270,7 @@ def solve_racket_pose(
             joint_upper,
             initial,
             restart,
+            layout,
         )
         score = solution.position_error_m + np.deg2rad(
             solution.normal_error_deg
@@ -300,10 +304,12 @@ def solve_racket_pose_candidates(
     if maximum_solutions < 1:
         raise ValueError("maximum_solutions must be at least one")
     config = config or RacketIKConfig()
-    target_position, normal, joint_lower, joint_upper = _prepare_ik(
+    target_position, normal, joint_lower, joint_upper, layout = _prepare_ik(
         model, target_position_m, target_normal, config
     )
-    guesses = _ik_initial_guesses(model, config, joint_lower, joint_upper, seed)
+    guesses = _ik_initial_guesses(
+        model, config, joint_lower, joint_upper, seed, layout
+    )
     solutions = []
     for restart, initial in enumerate(guesses):
         solution = _solve_racket_pose_attempt(
@@ -315,6 +321,7 @@ def solve_racket_pose_candidates(
             joint_upper,
             initial,
             restart,
+            layout,
         )
         if not solution.converged:
             continue
