@@ -17,10 +17,11 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "tennis_vla"
 ALLOWED_DEPENDENCIES: dict[str, set[str]] = {
     "physics": set(),
     "robot": set(),
+    "reporting": set(),
     "environment": {"physics", "robot"},
     "planning": {"physics", "robot", "environment"},
     "control": {"physics", "robot", "environment", "planning"},
-    "perception": {"physics", "robot", "environment"},
+    "perception": {"physics", "robot", "environment", "reporting"},
 }
 
 

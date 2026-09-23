@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from collections import Counter
 from dataclasses import asdict
@@ -13,6 +12,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tennis_vla.reporting import repository_state
 from tennis_vla.robot import tennis_ready_configuration
 from tennis_vla.environment import (
     PHASE_ONE_CONTACT_ENVELOPE,
@@ -31,26 +31,6 @@ from tennis_vla.planning import (
 
 SPLITS = {"train": (0, 200), "validation": (8000, 200), "test": (9000, 200)}
 
-
-def repository_state() -> dict[str, object]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def distribution(values: list[float]) -> dict[str, float] | None:

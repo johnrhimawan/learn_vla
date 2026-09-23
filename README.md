@@ -216,6 +216,7 @@ for tuning. Seeds 10000–10199 are the current v1 development set. Seeds
 | `tennis_vla/planning/` | racket-pose IK, joint trajectories, and strike search |
 | `tennis_vla/control/` | execution of a planned strike against MuJoCo physics |
 | `tennis_vla/perception/` | ball detection, dataset generation, and evaluation |
+| `tennis_vla/reporting/` | provenance shared by every report-producing script |
 | `examples/tennis_*.py` | reproducible simulations, audits, training, and evaluation entry points |
 | `tests/` | deterministic tennis regression suite |
 | `configs/tennis/` | datasets, evaluation, compute, and milestone contracts |

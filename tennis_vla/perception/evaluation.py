@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable
@@ -11,6 +10,7 @@ from typing import Any, Callable
 import numpy as np
 from PIL import Image
 
+from ..reporting import repository_state
 from .detection import (
     BallDetection,
     camera_ray_from_calibration,
@@ -20,26 +20,6 @@ from .detection import (
     triangulate_rays,
 )
 
-
-def _repository_state() -> dict[str, Any]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -189,7 +169,7 @@ def evaluate_stereo_detector(
     return {
         "schema_version": 1,
         "benchmark": benchmark_name,
-        "evaluator_source": _repository_state(),
+        "evaluator_source": repository_state(),
         "detector_source": detector_source,
         "dataset": {
             "name": info["dataset"],

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +11,7 @@ import mujoco
 import numpy as np
 from PIL import Image, ImageDraw
 
+from ..reporting import repository_state
 from ..robot.arm import arm_layout, tennis_ready_configuration
 from ..physics.ballistics import BallFlightConfig, BallFlightResult
 from .domain_randomization import (
@@ -64,26 +64,6 @@ def _first_bounce_time(flight: BallFlightResult, radius_m: float) -> float:
         raise ValueError("trajectory has no bounce")
     return float(flight.times_s[int(candidates[0])])
 
-
-def _repository_state() -> dict[str, Any]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def _noise_seed(domain_seed: int, frame_index: int, camera_index: int) -> int:
@@ -338,7 +318,7 @@ def generate_flight_dataset(
     info = {
         "schema_version": DATASET_SCHEMA_VERSION,
         "dataset": DATASET_NAME,
-        "source": _repository_state(),
+        "source": repository_state(),
         "coordinate_frame": "x along court toward far side; y lateral; z up",
         "image_format": "RGB PNG",
         "splits": split_summary,

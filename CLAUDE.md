@@ -203,9 +203,11 @@ tracked `docs/media/` and should stay small. Never claim a milestone from a sing
 example, and never treat a partial console stream as a result — audit scripts only write
 the report at the end.
 
-Report-producing scripts embed `repository_state()` (`git_revision`,
-`tracked_files_dirty`). **Commit before running one**, so the report records
-`tracked_files_dirty: false`.
+Report-producing scripts embed `repository_state()` from `tennis_vla.reporting`
+(`git_revision`, `tracked_files_dirty`). **Commit before running one**, so the report
+records `tracked_files_dirty: false`. It resolves the repository root through git
+rather than by counting parent directories, so moving a module between packages cannot
+change which directory gets inspected.
 
 When reading a strike audit, use `strict_pass`, not `controller_safe`: the aggregate
 `controller_safe` count also includes no-plan episodes, which default to safe.
@@ -218,9 +220,9 @@ claims follow from them.
 
 - `tennis_vla/` is a plain package (`package = false` in `pyproject.toml`); scripts in
   `examples/` prepend the repo root via `sys.path.insert(0, ...)` before importing it.
-- **Layered subpackages, imports point one way only:** `physics`, `robot` →
-  `environment` → `planning` → `control`, with `perception` depending on
-  `environment` and below. `tests/test_package_layering.py` enforces this, so a
+- **Layered subpackages, imports point one way only:** `physics`, `robot`,
+  `reporting` → `environment` → `planning` → `control`, with `perception`
+  depending on `environment` and below. `tests/test_package_layering.py` enforces this, so a
   backwards import fails the suite rather than quietly creating a cycle. Import from
   the package that owns the concept (`from tennis_vla.planning import ...`); each
   subpackage re-exports its public API through `__init__.py`.

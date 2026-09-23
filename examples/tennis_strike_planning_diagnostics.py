@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 import time
 from collections import Counter
@@ -14,6 +13,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tennis_vla.reporting import repository_state
 from tennis_vla.environment import (
     PHASE_ONE_CONTACT_ENVELOPE,
     ProgrammableFeeder,
@@ -34,26 +34,6 @@ PLANNING_STAGES = (
     "full_legal_returns",
 )
 
-
-def repository_state() -> dict[str, object]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def terminal_rejection_stage(diagnostics: dict[str, int | bool]) -> str:
