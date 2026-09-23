@@ -60,6 +60,7 @@ scripts/run python examples/tennis_active_strike_audit.py --seed-start 10096 --c
   --workers 1 --output /tmp/tennis-seed-10096.json                              # single-seed debug
 scripts/run python examples/tennis_strike_planning_diagnostics.py               # planner failure analysis
 scripts/run python examples/render_tennis_strike.py                             # README animation
+scripts/run python examples/render_mobile_base.py                               # mobile-base demo (scripted path)
 ```
 
 The staged planner fallbacks can take minutes per hard feed (observed up to ~130 s under

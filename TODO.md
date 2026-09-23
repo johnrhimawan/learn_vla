@@ -115,7 +115,8 @@ Nothing commands the base yet. This is the substantial stage.
 All of these encode a fixed base and are currently correct only for
 `FixedBase()`:
 
-- `README.md:4` — "fixed-base 7-DoF Sawyer arm"
+- `README.md` — the Mobile base section says no planner commands the base
+  and that all controller results are for the bolted arm; revise both
 - `docs/tennis_vla_plan.md:6,39` — embodiment; `:310` — the mobile-base gate
 - `configs/tennis/roadmap.yaml:7` — `initial_embodiment`, plus M2/M6 work items
 - `CLAUDE.md` — scene conventions (contact boxes are world-frame today)
