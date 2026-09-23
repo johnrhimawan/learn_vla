@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -12,30 +11,10 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.feeder import ProgrammableFeeder
-from tennis_vla.intercept import RacketIKConfig, find_kinematic_intercepts
+from tennis_vla.reporting import repository_state
+from tennis_vla.environment import ProgrammableFeeder, make_tennis_contact_model
+from tennis_vla.planning import RacketIKConfig, find_kinematic_intercepts
 
-
-def repository_state() -> dict[str, object]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def main() -> None:

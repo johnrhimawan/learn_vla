@@ -4,10 +4,13 @@ import unittest
 
 import numpy as np
 
-from tennis_vla.ballistics import BallFlightConfig, simulate_ball_flight
-from tennis_vla.court import TennisCourtSpec
-from tennis_vla.feeder import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
-from tennis_vla.impact import apply_racket_impact
+from tennis_vla.physics import (
+    BallFlightConfig,
+    TennisCourtSpec,
+    apply_racket_impact,
+    simulate_ball_flight,
+)
+from tennis_vla.environment import PHASE_ONE_CONTACT_ENVELOPE, ProgrammableFeeder
 
 
 class BallFlightTests(unittest.TestCase):

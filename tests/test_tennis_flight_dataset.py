@@ -9,17 +9,17 @@ import mujoco
 import numpy as np
 from PIL import Image
 
-from tennis_vla.domain_randomization import (
+from tennis_vla.perception import (
     apply_render_domain,
     postprocess_render,
     sample_render_domain,
 )
 from tennis_vla.environment import COURT_LINE_GEOMS, make_tennis_contact_model
-from tennis_vla.flight_dataset import (
+from tennis_vla.perception import (
     generate_flight_dataset,
     validate_flight_dataset,
 )
-from tennis_vla.learned_perception import (
+from tennis_vla.perception import (
     FlightBallImageDataset,
     LearnedBallDetector,
     train_ball_heatmap_detector,
@@ -29,7 +29,7 @@ from tennis_vla.perception import (
     camera_ray,
     camera_ray_from_calibration,
 )
-from tennis_vla.perception_evaluation import evaluate_color_stereo_baseline
+from tennis_vla.perception import evaluate_color_stereo_baseline
 
 
 class TennisFlightDatasetTests(unittest.TestCase):

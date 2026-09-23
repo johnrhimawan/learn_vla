@@ -22,8 +22,7 @@ import numpy as np
 # importable when this example is launched by file path.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.ballistics import BallFlightConfig, simulate_ball_flight
-from tennis_vla.court import court_scene_xml
+from tennis_vla.physics import BallFlightConfig, court_scene_xml, simulate_ball_flight
 
 
 def parse_args() -> argparse.Namespace:

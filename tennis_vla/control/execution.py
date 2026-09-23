@@ -9,17 +9,17 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import tennis_ready_configuration
-from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
-from .court import TennisCourtSpec
-from .strike import (
+from ..robot.arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
+from ..physics.ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
+from ..physics.court import TennisCourtSpec
+from ..planning.strike import (
     DEFAULT_RECOVERY_DURATIONS_S,
     JointTrajectoryBounds,
     QuinticJointTrajectory,
     StrikePlan,
     plan_ready_recovery_trajectory,
 )
-from .trajectory import SimulationJointMotionLimits
+from ..planning.trajectory import SimulationJointMotionLimits
 
 
 # Optional read-only hook called after every physics step.  It exists so
@@ -285,10 +285,11 @@ def simulate_mujoco_ball_flight(
         raise ValueError("flight configuration timestep must match MuJoCo")
     court = TennisCourtSpec()
     data = mujoco.MjData(model)
+    layout = arm_layout(model)
     qpos_address, dof_address = _ball_addresses(model)
     ready = tennis_ready_configuration(model)
-    data.qpos[:7] = ready
-    data.ctrl[:7] = ready
+    data.qpos[layout.arm_qpos] = ready
+    data.ctrl[layout.arm_actuators] = ready
     initial_position = np.asarray(position_m, dtype=np.float64).reshape(3)
     initial_velocity = np.asarray(velocity_m_s, dtype=np.float64).reshape(3)
     data.qpos[qpos_address : qpos_address + 7] = [
@@ -425,10 +426,11 @@ def audit_court_bounce(
     expected_index = int(bounce_indices[0] + 1)
 
     data = mujoco.MjData(model)
+    layout = arm_layout(model)
     qpos_address, dof_address = _ball_addresses(model)
     ready = tennis_ready_configuration(model)
-    data.qpos[:7] = ready
-    data.ctrl[:7] = ready
+    data.qpos[layout.arm_qpos] = ready
+    data.ctrl[layout.arm_actuators] = ready
     data.qpos[qpos_address : qpos_address + 7] = [
         *np.asarray(position_m, dtype=np.float64).reshape(3),
         1.0,
@@ -508,7 +510,7 @@ def _interpolated_reference(
             plan.candidate.solution.joint_positions_rad
             + plan.contact_joint_velocities_rad_s * post_contact,
             plan.contact_joint_velocities_rad_s.copy(),
-            np.zeros(7, dtype=np.float64),
+            np.zeros_like(plan.contact_joint_velocities_rad_s),
         )
 
     lower_time = np.floor(elapsed_s / period_s) * period_s
@@ -553,6 +555,57 @@ def _interpolated_trajectory_reference(
     )
 
 
+def _apply_servo_command(
+    model: mujoco.MjModel,
+    data: mujoco.MjData,
+    inverse_data: mujoco.MjData,
+    layout: EmbodimentLayout,
+    config: StrikeExecutionConfig,
+    desired_position: np.ndarray,
+    desired_velocity: np.ndarray,
+    desired_acceleration: np.ndarray,
+    actuator_gain: np.ndarray,
+    actuator_damping: np.ndarray,
+    control_lower: np.ndarray,
+    control_upper: np.ndarray,
+    inverse_torque_all: np.ndarray,
+) -> tuple[np.ndarray, bool]:
+    """Drive one 1 kHz step of the joint servo.
+
+    Rigid-body inverse dynamics supply the feedforward torque and a PD term
+    corrects the measured error.  Contact forces are audited separately and
+    deliberately excluded from the feedforward.  Shared by the strike and the
+    recovery so the two cannot drift apart.
+
+    Returns the applied torque and whether the position command was clipped.
+    """
+    inverse_data.qpos[layout.arm_qpos] = desired_position
+    inverse_data.qvel[layout.arm_dof] = desired_velocity
+    mujoco.mj_forward(model, inverse_data)
+    inverse_data.qacc[:] = 0.0
+    inverse_data.qacc[layout.arm_dof] = desired_acceleration
+    mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
+    applied_torque = (
+        inverse_torque_all[layout.arm_dof]
+        - inverse_data.qfrc_passive[layout.arm_dof]
+        + config.position_feedback_nm_rad
+        * (desired_position - data.qpos[layout.arm_qpos])
+        + config.velocity_feedback_nm_s_rad
+        * (desired_velocity - data.qvel[layout.arm_dof])
+    )
+    position_command = desired_position + (
+        actuator_damping * desired_velocity / actuator_gain
+    )
+    clipped_command = np.clip(position_command, control_lower, control_upper)
+    clipped = not np.array_equal(clipped_command, position_command)
+    data.ctrl[layout.arm_actuators] = clipped_command
+    # Only arm degrees of freedom are ever driven here, so clearing the whole
+    # vector keeps any other degree of freedom (a mobile base) at zero.
+    data.qfrc_applied[:] = 0.0
+    data.qfrc_applied[layout.arm_dof] = applied_torque
+    return applied_torque, clipped
+
+
 def _plan_recovery_trajectory(
     model: mujoco.MjModel,
     start_position_rad: np.ndarray,
@@ -590,10 +643,11 @@ def _execute_recovery(
     observer: StepObserver | None = None,
 ) -> StrikeRecoveryResult:
     """Plan and execute a bounded recovery on the live post-strike state."""
+    layout = arm_layout(model)
     planned = _plan_recovery_trajectory(
         model,
-        data.qpos[:7].copy(),
-        data.qvel[:7].copy(),
+        data.qpos[layout.arm_qpos].copy(),
+        data.qvel[layout.arm_dof].copy(),
         config,
     )
     if planned is None:
@@ -618,12 +672,12 @@ def _execute_recovery(
     trajectory, bounds = planned
     physics_dt = float(model.opt.timestep)
     reference_period = 1.0 / config.reference_rate_hz
-    actuator_gain = model.actuator_gainprm[:7, 0]
-    actuator_damping = -model.actuator_biasprm[:7, 2]
-    control_lower = model.actuator_ctrlrange[:7, 0]
-    control_upper = model.actuator_ctrlrange[:7, 1]
-    joint_lower = model.jnt_range[:7, 0]
-    joint_upper = model.jnt_range[:7, 1]
+    actuator_gain = model.actuator_gainprm[layout.arm_actuators, 0]
+    actuator_damping = -model.actuator_biasprm[layout.arm_actuators, 2]
+    control_lower = model.actuator_ctrlrange[layout.arm_actuators, 0]
+    control_upper = model.actuator_ctrlrange[layout.arm_actuators, 1]
+    joint_lower = model.jnt_range[layout.arm_joints, 0]
+    joint_upper = model.jnt_range[layout.arm_joints, 1]
     inverse_torque_all = np.zeros(model.nv, dtype=np.float64)
     ball_geom = model.geom("tennis_ball_geom").id
     court_geom = model.geom("tennis_court").id
@@ -648,29 +702,22 @@ def _execute_recovery(
                 reference_period,
             )
         )
-        inverse_data.qpos[:7] = desired_position
-        inverse_data.qvel[:7] = desired_velocity
-        mujoco.mj_forward(model, inverse_data)
-        inverse_data.qacc[:] = 0.0
-        inverse_data.qacc[:7] = desired_acceleration
-        mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
-        applied_torque = (
-            inverse_torque_all[:7]
-            - inverse_data.qfrc_passive[:7]
-            + config.position_feedback_nm_rad
-            * (desired_position - data.qpos[:7])
-            + config.velocity_feedback_nm_s_rad
-            * (desired_velocity - data.qvel[:7])
+        applied_torque, clipped = _apply_servo_command(
+            model,
+            data,
+            inverse_data,
+            layout,
+            config,
+            desired_position,
+            desired_velocity,
+            desired_acceleration,
+            actuator_gain,
+            actuator_damping,
+            control_lower,
+            control_upper,
+            inverse_torque_all,
         )
-        position_command = desired_position + (
-            actuator_damping * desired_velocity / actuator_gain
-        )
-        clipped_command = np.clip(position_command, control_lower, control_upper)
-        if not np.array_equal(clipped_command, position_command):
-            clipped_steps += 1
-        data.ctrl[:7] = clipped_command
-        data.qfrc_applied[:] = 0.0
-        data.qfrc_applied[:7] = applied_torque
+        clipped_steps += int(clipped)
         apply_ball_drag(model, data, flight_config)
         mujoco.mj_step(model, data)
         if observer is not None:
@@ -683,12 +730,12 @@ def _execute_recovery(
         )
         maximum_tracking_error = max(
             maximum_tracking_error,
-            float(np.max(np.abs(data.qpos[:7] - expected_position))),
+            float(np.max(np.abs(data.qpos[layout.arm_qpos] - expected_position))),
         )
-        maximum_speed = max(maximum_speed, float(np.max(np.abs(data.qvel[:7]))))
+        maximum_speed = max(maximum_speed, float(np.max(np.abs(data.qvel[layout.arm_dof]))))
         maximum_acceleration = max(
             maximum_acceleration,
-            float(np.max(np.abs(data.qacc[:7]))),
+            float(np.max(np.abs(data.qacc[layout.arm_dof]))),
         )
         maximum_torque = max(maximum_torque, float(np.max(np.abs(applied_torque))))
         minimum_margin = min(
@@ -696,8 +743,8 @@ def _execute_recovery(
             float(
                 np.min(
                     np.minimum(
-                        data.qpos[:7] - joint_lower,
-                        joint_upper - data.qpos[:7],
+                        data.qpos[layout.arm_qpos] - joint_lower,
+                        joint_upper - data.qpos[layout.arm_qpos],
                     )
                 )
             ),
@@ -710,7 +757,7 @@ def _execute_recovery(
             unexpected_contact_steps += 1
 
     final_error = float(
-        np.max(np.abs(data.qpos[:7] - tennis_ready_configuration(model)))
+        np.max(np.abs(data.qpos[layout.arm_qpos] - tennis_ready_configuration(model)))
     )
     failures = []
     if maximum_tracking_error > config.maximum_recovery_joint_tracking_error_rad:
@@ -779,10 +826,11 @@ def execute_strike(
 
     data = mujoco.MjData(model)
     inverse_data = mujoco.MjData(model)
+    layout = arm_layout(model)
     qpos_address, dof_address = _ball_addresses(model)
     start_position, _, _ = plan.trajectory.sample(0.0)
-    data.qpos[:7] = start_position
-    data.ctrl[:7] = start_position
+    data.qpos[layout.arm_qpos] = start_position
+    data.ctrl[layout.arm_actuators] = start_position
     data.qpos[qpos_address : qpos_address + 7] = [
         *np.asarray(initial_ball_position_m, dtype=np.float64).reshape(3),
         1.0,
@@ -804,12 +852,12 @@ def execute_strike(
     ]
     mujoco.mj_forward(model, data)
 
-    actuator_gain = model.actuator_gainprm[:7, 0]
-    actuator_damping = -model.actuator_biasprm[:7, 2]
-    control_lower = model.actuator_ctrlrange[:7, 0]
-    control_upper = model.actuator_ctrlrange[:7, 1]
-    joint_lower = model.jnt_range[:7, 0]
-    joint_upper = model.jnt_range[:7, 1]
+    actuator_gain = model.actuator_gainprm[layout.arm_actuators, 0]
+    actuator_damping = -model.actuator_biasprm[layout.arm_actuators, 2]
+    control_lower = model.actuator_ctrlrange[layout.arm_actuators, 0]
+    control_upper = model.actuator_ctrlrange[layout.arm_actuators, 1]
+    joint_lower = model.jnt_range[layout.arm_joints, 0]
+    joint_upper = model.jnt_range[layout.arm_joints, 1]
     inverse_torque_all = np.zeros(model.nv, dtype=np.float64)
     ball_geom = model.geom("tennis_ball_geom").id
     racket_geom = model.geom("racket_head").id
@@ -841,28 +889,22 @@ def execute_strike(
         desired_position, desired_velocity, desired_acceleration = (
             _interpolated_reference(plan, elapsed, reference_period)
         )
-        inverse_data.qpos[:7] = desired_position
-        inverse_data.qvel[:7] = desired_velocity
-        mujoco.mj_forward(model, inverse_data)
-        inverse_data.qacc[:] = 0.0
-        inverse_data.qacc[:7] = desired_acceleration
-        mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
-        applied_torque = (
-            inverse_torque_all[:7]
-            - inverse_data.qfrc_passive[:7]
-            + config.position_feedback_nm_rad
-            * (desired_position - data.qpos[:7])
-            + config.velocity_feedback_nm_s_rad
-            * (desired_velocity - data.qvel[:7])
+        applied_torque, clipped = _apply_servo_command(
+            model,
+            data,
+            inverse_data,
+            layout,
+            config,
+            desired_position,
+            desired_velocity,
+            desired_acceleration,
+            actuator_gain,
+            actuator_damping,
+            control_lower,
+            control_upper,
+            inverse_torque_all,
         )
-        position_command = desired_position + (
-            actuator_damping * desired_velocity / actuator_gain
-        )
-        clipped_command = np.clip(position_command, control_lower, control_upper)
-        if not np.array_equal(clipped_command, position_command):
-            clipped_steps += 1
-        data.ctrl[:7] = clipped_command
-        data.qfrc_applied[:7] = applied_torque
+        clipped_steps += int(clipped)
         apply_ball_drag(model, data, flight_config)
         pre_step_ball_velocity = data.qvel[
             dof_address : dof_address + 3
@@ -876,24 +918,24 @@ def execute_strike(
         )
         maximum_tracking_error = max(
             maximum_tracking_error,
-            float(np.max(np.abs(data.qpos[:7] - expected_position))),
+            float(np.max(np.abs(data.qpos[layout.arm_qpos] - expected_position))),
         )
-        maximum_speed = max(maximum_speed, float(np.max(np.abs(data.qvel[:7]))))
+        maximum_speed = max(maximum_speed, float(np.max(np.abs(data.qvel[layout.arm_dof]))))
         maximum_torque = max(maximum_torque, float(np.max(np.abs(applied_torque))))
         minimum_margin = min(
             minimum_margin,
             float(
                 np.min(
                     np.minimum(
-                        data.qpos[:7] - joint_lower,
-                        joint_upper - data.qpos[:7],
+                        data.qpos[layout.arm_qpos] - joint_lower,
+                        joint_upper - data.qpos[layout.arm_qpos],
                     )
                 )
             ),
         )
 
         touching_racket = _geoms_touching(data, ball_geom, racket_geom)
-        actual_acceleration = float(np.max(np.abs(data.qacc[:7])))
+        actual_acceleration = float(np.max(np.abs(data.qacc[layout.arm_dof])))
         if actual_contact_time is None and not touching_racket:
             maximum_pre_contact_acceleration = max(
                 maximum_pre_contact_acceleration, actual_acceleration
@@ -923,7 +965,7 @@ def execute_strike(
             contact_joint_position_error = float(
                 np.max(
                     np.abs(
-                        data.qpos[:7]
+                        data.qpos[layout.arm_qpos]
                         - plan.candidate.solution.joint_positions_rad
                     )
                 )
@@ -931,7 +973,7 @@ def execute_strike(
             contact_joint_velocity_error = float(
                 np.max(
                     np.abs(
-                        data.qvel[:7] - plan.contact_joint_velocities_rad_s
+                        data.qvel[layout.arm_dof] - plan.contact_joint_velocities_rad_s
                     )
                 )
             )

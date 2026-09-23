@@ -1,11 +1,12 @@
 # Tennis VLA
 
 This repository develops a vision-language-action system that returns tennis
-balls in MuJoCo. The first target is a fixed-base 7-DoF Sawyer arm with a
-regulation-size racket returning programmable feeds after one bounce. Later
-milestones add visual ball tracking, behavior cloning, residual reinforcement
-learning, language-conditioned placement, rallies, and guarded hardware
-transfer.
+balls in MuJoCo. The first target is a 7-DoF Sawyer arm with a regulation-size
+racket returning programmable feeds after one bounce. The arm is bolted behind
+the baseline by default; an optional planar mobile base lets it move around the
+court, and is the groundwork for rallies. Later milestones add visual ball
+tracking, behavior cloning, residual reinforcement learning,
+language-conditioned placement, rallies, and guarded hardware transfer.
 
 The repository contains only the tennis project.
 
@@ -19,6 +20,7 @@ The repository contains only the tennis project.
   machine-readable milestone status and evaluation splits.
 - [`HANDOFF.md`](HANDOFF.md) records current results, known gaps, reserved seeds,
   and the immediate engineering queue.
+- [`TODO.md`](TODO.md) tracks the remaining mobile-base work.
 
 ## The current result
 
@@ -107,6 +109,51 @@ detector is the only learned tennis component. M3 will behavior-clone oracle
 returns into a VLA; M4 will train a residual SAC policy for contact timing,
 racket state, and shot placement.
 
+## Mobile base
+
+![The Sawyer on its mobile base sidesteps left, advances toward the net, then
+sidesteps right, turning to face each stance.](docs/media/mobile_base.gif)
+
+A bolted arm covers very little court. Its racket reaches y ∈ [-0.94, +0.91] m
+of an 8.23 m singles court, and only 42 of 100 feeds on the broad feeder
+envelope have a reachable contact
+([`intercept_kinematic_audit_v0.json`](results/tennis/intercept_kinematic_audit_v0.json)).
+The phase-one feeder envelope is narrowed to work around exactly that, and
+rallies are impossible without the robot moving.
+
+The optional base gives the Sawyer's root body three planar degrees of
+freedom — slide x, slide y, and yaw — each driven by its own position
+actuator:
+
+```python
+from tennis_vla.environment import make_tennis_contact_model
+from tennis_vla.robot import MobileBase, arm_layout
+
+model = make_tennis_contact_model(base=MobileBase())
+layout = arm_layout(model)  # resolves arm and base indices by joint name
+```
+
+These are planar joints, not wheels: no rolling contact, tyre slip, or
+nonholonomic constraint, since none of those bear on where the robot should
+stand. Base joint values are displacements from the bolted stance at x = -10.6,
+so a fresh simulation starts in the fixed-base geometry. `FixedBase()` remains
+the default and builds exactly the original model, so every tracked result
+above still reproduces.
+
+What is verified so far:
+
+- On the mobile model the canonical strike contacts at the same 1.492 s with the
+  same 2 ms timing error, lands legally, and recovers, while the base holds
+  station within 4.3 mm against the arm's reaction forces.
+- In the demonstration above the base tracks a minimum-jerk tour within 8.3 mm
+  and 0.4° while the arm holds its ready pose.
+
+What is not done: **no planner commands the base yet.** The animation follows a
+fixed scripted path, not a chosen stance. Stance selection, a travel-then-swing
+trajectory, and re-auditing on the broad envelope are the next stages; see
+[`TODO.md`](TODO.md). Until they land, every controller result in this README
+is for the bolted arm.
+
 ## Reproduce the core checks
 
 Run the test suite:
@@ -125,11 +172,13 @@ scripts/run python examples/tennis_intercept_oracle.py --seed 1
 scripts/run python examples/tennis_strike_execution.py
 ```
 
-Re-render the animation at the top of this file:
+Re-render the animations in this file:
 
 ```bash
 scripts/run python examples/render_tennis_strike.py \
   --output docs/media/canonical_strike.gif
+scripts/run python examples/render_mobile_base.py \
+  --output docs/media/mobile_base.gif
 ```
 
 Run the smaller active-strike development audit:
@@ -210,7 +259,13 @@ for tuning. Seeds 10000–10199 are the current v1 development set. Seeds
 
 | Path | Purpose |
 | --- | --- |
-| `tennis_vla/` | tennis physics, perception, planning, control, and execution |
+| `tennis_vla/physics/` | ball flight, court geometry, and racket impact |
+| `tennis_vla/robot/` | the pinned Sawyer arm, racket, and optional mobile base |
+| `tennis_vla/environment/` | MuJoCo scene and the programmable ball machine |
+| `tennis_vla/planning/` | racket-pose IK, joint trajectories, and strike search |
+| `tennis_vla/control/` | execution of a planned strike against MuJoCo physics |
+| `tennis_vla/perception/` | ball detection, dataset generation, and evaluation |
+| `tennis_vla/reporting/` | provenance shared by every report-producing script |
 | `examples/tennis_*.py` | reproducible simulations, audits, training, and evaluation entry points |
 | `tests/` | deterministic tennis regression suite |
 | `configs/tennis/` | datasets, evaluation, compute, and milestone contracts |

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -13,40 +12,21 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.ballistics import simulate_ball_flight
+from tennis_vla.reporting import repository_state
+from tennis_vla.physics import simulate_ball_flight
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import (
+from tennis_vla.control import (
     StrikeExecutionConfig,
     audit_court_bounce,
     execute_strike,
     simulate_mujoco_ball_flight,
 )
-from tennis_vla.strike import plan_safe_center_strikes
+from tennis_vla.planning import plan_safe_center_strikes
 
 
 CANONICAL_POSITION_M = np.array([10.5, 0.0, 1.4])
 CANONICAL_VELOCITY_M_S = np.array([-17.75, 0.0, 4.6])
 
-
-def repository_state() -> dict[str, object]:
-    root = Path(__file__).resolve().parents[1]
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return {"git_revision": revision, "tracked_files_dirty": dirty}
 
 
 def main() -> None:

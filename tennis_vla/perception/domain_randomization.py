@@ -8,7 +8,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .environment import (
+from ..environment.scene import (
     COURT_LINE_GEOMS,
     STEREO_CAMERA_FOVY_DEG,
     STEREO_CAMERA_POSITIONS_M,

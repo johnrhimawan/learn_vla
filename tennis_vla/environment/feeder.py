@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
+from ..physics.ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 
 
 @dataclass(frozen=True)

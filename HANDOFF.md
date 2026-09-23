@@ -90,16 +90,17 @@ Important source files:
 
 | Path | Role |
 | --- | --- |
-| `tennis_vla/environment.py` | integrated Sawyer, racket, court, ball, and camera model |
-| `tennis_vla/feeder.py` | deterministic feeder envelopes and sampled feeds |
-| `tennis_vla/ballistics.py` | analytical no-spin flight and court outcome |
-| `tennis_vla/impact.py` | first-order racket impact map |
-| `tennis_vla/intercept.py` | racket-pose IK and intercept candidates |
-| `tennis_vla/trajectory.py` | minimum-jerk trajectories and dynamic screens |
-| `tennis_vla/strike.py` | active contact-state search, return prediction, and fallbacks |
-| `tennis_vla/execution.py` | 1 kHz physics, 250 Hz tracking, contact, scoring, and recovery |
-| `tennis_vla/flight_dataset.py` | randomized stereo flight dataset generation |
-| `tennis_vla/learned_perception.py` | heatmap detector training and inference |
+| `tennis_vla/environment/scene.py` | integrated Sawyer, racket, court, ball, and camera model |
+| `tennis_vla/environment/feeder.py` | deterministic feeder envelopes and sampled feeds |
+| `tennis_vla/physics/ballistics.py` | analytical no-spin flight and court outcome |
+| `tennis_vla/physics/impact.py` | first-order racket impact map |
+| `tennis_vla/robot/arm.py` | pinned Sawyer, racket, layout, and optional mobile base |
+| `tennis_vla/planning/intercept.py` | racket-pose IK and intercept candidates |
+| `tennis_vla/planning/trajectory.py` | minimum-jerk trajectories and dynamic screens |
+| `tennis_vla/planning/strike.py` | active contact-state search, return prediction, and fallbacks |
+| `tennis_vla/control/execution.py` | 1 kHz physics, 250 Hz tracking, contact, scoring, and recovery |
+| `tennis_vla/perception/flight_dataset.py` | randomized stereo flight dataset generation |
+| `tennis_vla/perception/learned.py` | heatmap detector training and inference |
 | `examples/tennis_active_strike_audit.py` | parallel, report-producing M2 audit |
 | `examples/tennis_strike_planning_diagnostics.py` | focused planner failure analysis |
 

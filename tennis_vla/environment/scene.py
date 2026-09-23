@@ -8,10 +8,16 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from .arm import make_sawyer_racket_spec, tennis_ready_configuration
-from .ballistics import BallFlightConfig
-from .court import TennisCourtSpec
-from .impact import RacketImpactConfig
+from ..robot.arm import (
+    BOLTED_BASE_POSITION_M,
+    BaseConfig,
+    arm_layout,
+    make_sawyer_racket_spec,
+    tennis_ready_configuration,
+)
+from ..physics.ballistics import BallFlightConfig
+from ..physics.court import TennisCourtSpec
+from ..physics.impact import RacketImpactConfig
 
 
 STEREO_CAMERA_TARGET_M = (-6.5, 0.0, 1.0)
@@ -128,17 +134,20 @@ def _add_court_markings(world: mujoco.MjsBody, court: TennisCourtSpec) -> None:
 
 def make_tennis_contact_model(
     racket_solref: tuple[float, float] = (-100_000.0, -50.0),
+    base: BaseConfig | None = None,
 ) -> mujoco.MjModel:
     """Build the first integrated scene with physical court/net/ball contact."""
     court = TennisCourtSpec()
     ball = BallFlightConfig()
-    spec = make_sawyer_racket_spec()
+    spec = make_sawyer_racket_spec(base)
     spec.modelname = "tennis_contact_v0"
     spec.option.timestep = 0.001
     spec.option.gravity = [0.0, 0.0, -ball.gravity_m_s2]
 
-    # Put the fixed-base arm behind the near baseline, facing the court.
-    spec.body("base").pos = [-10.6, 0.0, 0.0]
+    # Put the arm behind the near baseline, facing the court.  With a mobile
+    # base this is the origin its joints displace from, so a zero base
+    # configuration is this same stance.
+    spec.body("base").pos = list(BOLTED_BASE_POSITION_M)
 
     world = spec.worldbody
     world.add_geom(
@@ -230,8 +239,9 @@ def probe_stationary_racket_contact(
     # Isolate contact response from ball drop and arm gravity compensation.
     model.opt.gravity[:] = 0.0
     data = mujoco.MjData(model)
-    data.qpos[:7] = tennis_ready_configuration(model)
-    data.ctrl[:] = data.qpos[:7]
+    layout = arm_layout(model)
+    data.qpos[layout.arm_qpos] = tennis_ready_configuration(model)
+    data.ctrl[layout.arm_actuators] = data.qpos[layout.arm_qpos]
     mujoco.mj_forward(model, data)
 
     ball_joint = model.joint("ball_free")

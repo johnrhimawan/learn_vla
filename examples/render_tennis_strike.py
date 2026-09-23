@@ -24,14 +24,14 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tennis_vla.arm import tennis_ready_configuration
+from tennis_vla.robot import arm_layout, tennis_ready_configuration
 from tennis_vla.environment import make_tennis_contact_model
-from tennis_vla.execution import (
+from tennis_vla.control import (
     StrikeExecutionConfig,
     execute_strike,
     simulate_mujoco_ball_flight,
 )
-from tennis_vla.strike import plan_safe_center_strikes
+from tennis_vla.planning import plan_safe_center_strikes
 
 
 CANONICAL_POSITION_M = np.array([10.5, 0.0, 1.4])
@@ -180,6 +180,7 @@ def render_strike_gif(
         raise SystemExit("canonical strike did not contact and separate")
 
     states = list(recorder.samples)
+    layout = arm_layout(model)
     ball_address = model.jnt_qposadr[model.joint("ball_free").id]
     executed_samples = len(states)
 
@@ -192,7 +193,7 @@ def render_strike_gif(
         offset_s = last_time_s - execution.separation_time_s + step_s
         while offset_s <= horizon_s:
             qpos = last_qpos.copy()
-            qpos[:7] = ready
+            qpos[layout.arm_qpos] = ready
             qpos[ball_address : ball_address + 3] = [
                 np.interp(offset_s, measured_return.times_s, measured_return.positions_m[:, axis])
                 for axis in range(3)
