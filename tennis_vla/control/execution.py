@@ -9,7 +9,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from ..robot.arm import arm_layout, tennis_ready_configuration
+from ..robot.arm import EmbodimentLayout, arm_layout, tennis_ready_configuration
 from ..physics.ballistics import BallFlightConfig, BallFlightResult, simulate_ball_flight
 from ..physics.court import TennisCourtSpec
 from ..planning.strike import (
@@ -555,6 +555,57 @@ def _interpolated_trajectory_reference(
     )
 
 
+def _apply_servo_command(
+    model: mujoco.MjModel,
+    data: mujoco.MjData,
+    inverse_data: mujoco.MjData,
+    layout: EmbodimentLayout,
+    config: StrikeExecutionConfig,
+    desired_position: np.ndarray,
+    desired_velocity: np.ndarray,
+    desired_acceleration: np.ndarray,
+    actuator_gain: np.ndarray,
+    actuator_damping: np.ndarray,
+    control_lower: np.ndarray,
+    control_upper: np.ndarray,
+    inverse_torque_all: np.ndarray,
+) -> tuple[np.ndarray, bool]:
+    """Drive one 1 kHz step of the joint servo.
+
+    Rigid-body inverse dynamics supply the feedforward torque and a PD term
+    corrects the measured error.  Contact forces are audited separately and
+    deliberately excluded from the feedforward.  Shared by the strike and the
+    recovery so the two cannot drift apart.
+
+    Returns the applied torque and whether the position command was clipped.
+    """
+    inverse_data.qpos[layout.arm_qpos] = desired_position
+    inverse_data.qvel[layout.arm_dof] = desired_velocity
+    mujoco.mj_forward(model, inverse_data)
+    inverse_data.qacc[:] = 0.0
+    inverse_data.qacc[layout.arm_dof] = desired_acceleration
+    mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
+    applied_torque = (
+        inverse_torque_all[layout.arm_dof]
+        - inverse_data.qfrc_passive[layout.arm_dof]
+        + config.position_feedback_nm_rad
+        * (desired_position - data.qpos[layout.arm_qpos])
+        + config.velocity_feedback_nm_s_rad
+        * (desired_velocity - data.qvel[layout.arm_dof])
+    )
+    position_command = desired_position + (
+        actuator_damping * desired_velocity / actuator_gain
+    )
+    clipped_command = np.clip(position_command, control_lower, control_upper)
+    clipped = not np.array_equal(clipped_command, position_command)
+    data.ctrl[layout.arm_actuators] = clipped_command
+    # Only arm degrees of freedom are ever driven here, so clearing the whole
+    # vector keeps any other degree of freedom (a mobile base) at zero.
+    data.qfrc_applied[:] = 0.0
+    data.qfrc_applied[layout.arm_dof] = applied_torque
+    return applied_torque, clipped
+
+
 def _plan_recovery_trajectory(
     model: mujoco.MjModel,
     start_position_rad: np.ndarray,
@@ -651,29 +702,22 @@ def _execute_recovery(
                 reference_period,
             )
         )
-        inverse_data.qpos[layout.arm_qpos] = desired_position
-        inverse_data.qvel[layout.arm_dof] = desired_velocity
-        mujoco.mj_forward(model, inverse_data)
-        inverse_data.qacc[:] = 0.0
-        inverse_data.qacc[layout.arm_dof] = desired_acceleration
-        mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
-        applied_torque = (
-            inverse_torque_all[layout.arm_dof]
-            - inverse_data.qfrc_passive[layout.arm_dof]
-            + config.position_feedback_nm_rad
-            * (desired_position - data.qpos[layout.arm_qpos])
-            + config.velocity_feedback_nm_s_rad
-            * (desired_velocity - data.qvel[layout.arm_dof])
+        applied_torque, clipped = _apply_servo_command(
+            model,
+            data,
+            inverse_data,
+            layout,
+            config,
+            desired_position,
+            desired_velocity,
+            desired_acceleration,
+            actuator_gain,
+            actuator_damping,
+            control_lower,
+            control_upper,
+            inverse_torque_all,
         )
-        position_command = desired_position + (
-            actuator_damping * desired_velocity / actuator_gain
-        )
-        clipped_command = np.clip(position_command, control_lower, control_upper)
-        if not np.array_equal(clipped_command, position_command):
-            clipped_steps += 1
-        data.ctrl[layout.arm_actuators] = clipped_command
-        data.qfrc_applied[:] = 0.0
-        data.qfrc_applied[layout.arm_dof] = applied_torque
+        clipped_steps += int(clipped)
         apply_ball_drag(model, data, flight_config)
         mujoco.mj_step(model, data)
         if observer is not None:
@@ -845,28 +889,22 @@ def execute_strike(
         desired_position, desired_velocity, desired_acceleration = (
             _interpolated_reference(plan, elapsed, reference_period)
         )
-        inverse_data.qpos[layout.arm_qpos] = desired_position
-        inverse_data.qvel[layout.arm_dof] = desired_velocity
-        mujoco.mj_forward(model, inverse_data)
-        inverse_data.qacc[:] = 0.0
-        inverse_data.qacc[layout.arm_dof] = desired_acceleration
-        mujoco.mj_rne(model, inverse_data, 1, inverse_torque_all)
-        applied_torque = (
-            inverse_torque_all[layout.arm_dof]
-            - inverse_data.qfrc_passive[layout.arm_dof]
-            + config.position_feedback_nm_rad
-            * (desired_position - data.qpos[layout.arm_qpos])
-            + config.velocity_feedback_nm_s_rad
-            * (desired_velocity - data.qvel[layout.arm_dof])
+        applied_torque, clipped = _apply_servo_command(
+            model,
+            data,
+            inverse_data,
+            layout,
+            config,
+            desired_position,
+            desired_velocity,
+            desired_acceleration,
+            actuator_gain,
+            actuator_damping,
+            control_lower,
+            control_upper,
+            inverse_torque_all,
         )
-        position_command = desired_position + (
-            actuator_damping * desired_velocity / actuator_gain
-        )
-        clipped_command = np.clip(position_command, control_lower, control_upper)
-        if not np.array_equal(clipped_command, position_command):
-            clipped_steps += 1
-        data.ctrl[layout.arm_actuators] = clipped_command
-        data.qfrc_applied[layout.arm_dof] = applied_torque
+        clipped_steps += int(clipped)
         apply_ball_drag(model, data, flight_config)
         pre_step_ball_velocity = data.qvel[
             dof_address : dof_address + 3
